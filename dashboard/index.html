@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electrical Load Calculator — Standard Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --cp:#14532d;--ca:#16a34a;--cb:#f59e0b;--cd:#dc2626;--cw:#d97706;
+      --cbg:#f0f7f1;--csf:#ffffff;--cbr:#d1e7d8;--ct:#1e293b;--cm:#64748b;
+      --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--cbg);color:var(--ct);font-size:14px;min-height:100vh}
+    /* NAV */
+    .nav{background:var(--cp);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.25)}
+    .nav-left{display:flex;align-items:center;gap:10px}
+    .nav-logo{width:30px;height:30px;background:var(--ca);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+    .nav-title{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;line-height:1.2}
+    .nav-title span{display:block;font-size:9px;opacity:.6;font-weight:400;letter-spacing:.5px;text-transform:uppercase;margin-top:1px}
+    .edition-pill{background:rgba(22,163,74,0.25);border:1px solid rgba(22,163,74,0.5);color:#86efac;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
+    .nav-right{display:flex;align-items:center;gap:10px}
+    .nav-user{font-size:12px;opacity:.7}
+    .sign-out-btn{padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
+    .sign-out-btn:hover{background:rgba(255,255,255,.1)}
+    /* LAYOUT */
+    .app{max-width:980px;margin:0 auto;padding:20px 16px 60px}
+    /* TABS */
+    .tab-bar{display:flex;overflow-x:auto;gap:0;background:var(--csf);border:1px solid var(--cbr);border-radius:12px;padding:5px;margin-bottom:20px;scrollbar-width:none;box-shadow:var(--shadow)}
+    .tab-bar::-webkit-scrollbar{display:none}
+    .tb{padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--cm);border:none;background:transparent;transition:all .2s;flex-shrink:0;font-family:'DM Sans',sans-serif}
+    .tb.active{background:var(--cp);color:#fff;box-shadow:0 2px 8px rgba(20,83,45,0.3)}
+    .tb:hover:not(.active){background:var(--cbg);color:var(--ct)}
+    /* PANELS */
+    .panel{display:none}.panel.active{display:block}
+    /* CARD */
+    .card{background:var(--csf);border:1px solid var(--cbr);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+    .card-title{font-size:11px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.7px;margin-bottom:16px;display:flex;align-items:center;gap:7px}
+    .card-title::before{content:'';display:block;width:3px;height:14px;background:var(--ca);border-radius:2px}
+    /* GRIDS */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+    /* FIELDS */
+    .fld{display:flex;flex-direction:column;gap:5px}
+    .fld label{font-size:10.5px;font-weight:700;color:var(--cm);text-transform:uppercase;letter-spacing:.4px}
+    input,select{width:100%;padding:8px 11px;border:1.5px solid var(--cbr);border-radius:8px;font-size:13px;color:var(--ct);background:var(--csf);font-family:'DM Sans',sans-serif;transition:all .15s}
+    input:focus,select:focus{outline:none;border-color:var(--ca);box-shadow:0 0 0 3px rgba(22,163,74,0.1)}
+    input[readonly]{background:#f8fafc;color:var(--cm)}
+    /* BUTTONS */
+    .btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:5px}
+    .btn-primary{background:var(--cp);color:#fff}.btn-primary:hover{background:#166534}
+    .btn-green{background:var(--ca);color:#fff}.btn-green:hover{background:#15803d}
+    .btn-amber{background:var(--cb);color:#1a1a1a}.btn-amber:hover{background:#e08b00}
+    .btn-sm{padding:5px 11px;font-size:12px}
+    .btn-ghost{background:transparent;border:1.5px solid var(--cbr);color:var(--cm)}.btn-ghost:hover{border-color:var(--ca);color:var(--ca)}
+    /* METRICS */
+    .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin:14px 0}
+    .metric{background:var(--cbg);border:1.5px solid var(--cbr);border-radius:10px;padding:12px;text-align:center}
+    .metric .val{font-size:20px;font-weight:700;color:var(--cp);font-family:'Space Mono',monospace}
+    .metric .unit{font-size:11px;color:var(--ca);font-weight:700;margin-top:1px}
+    .metric .lbl{font-size:10px;color:var(--cm);text-transform:uppercase;letter-spacing:.3px;margin-top:2px}
+    .metric.hi{background:var(--cp);border-color:var(--cp)}
+    .metric.hi .val{color:#86efac}.metric.hi .unit,.metric.hi .lbl{color:rgba(255,255,255,.6)}
+    .metric.amber{background:#fffbeb;border-color:#fde68a}
+    .metric.amber .val{color:#92400e}.metric.amber .unit{color:var(--cb)}
+    /* ALERTS */
+    .alert{padding:10px 14px;border-radius:8px;font-size:12px;font-weight:500;margin:8px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.5}
+    .alert-info{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+    .alert-warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+    .alert-success{background:#dcfce7;border:1px solid #86efac;color:#14532d}
+    .alert-error{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c}
+    .alert-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
+    /* TAGS */
+    .tag{display:inline-block;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700}
+    .tg{background:#dcfce7;color:#15803d}.tr{background:#fee2e2;color:#b91c1c}
+    .ta{background:#fef3c7;color:#b45309}.tb2{background:#dbeafe;color:#1d4ed8}
+    /* FORMULA */
+    .formula{background:#f8fafc;border:1px solid var(--cbr);border-left:3px solid var(--cb);border-radius:0 7px 7px 0;padding:10px 14px;font-family:'Space Mono',monospace;font-size:11.5px;color:var(--cm);margin:8px 0;line-height:1.6}
+    /* LOAD TABLE */
+    .load-header{display:grid;grid-template-columns:2.5fr 1.2fr .55fr .9fr .9fr .6fr .6fr .6fr 32px;gap:4px;padding:5px 4px;font-size:10px;font-weight:700;color:var(--cm);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--cbr)}
+    .load-row{display:grid;grid-template-columns:2.5fr 1.2fr .55fr .9fr .9fr .6fr .6fr .6fr 32px;gap:4px;align-items:center;margin-bottom:4px}
+    .load-row input,.load-row select{padding:5px 7px;font-size:12px}
+    .del-btn{width:28px;height:28px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;color:var(--cd);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .del-btn:hover{background:#fee2e2}
+    .total-bar{background:var(--cp);color:#fff;border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+    .total-bar .big{font-size:18px;font-weight:700;color:#86efac;font-family:'Space Mono',monospace}
+    /* PRESETS */
+    .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+    .preset-btn{padding:4px 12px;border-radius:20px;border:1.5px solid var(--cbr);font-size:11px;font-weight:600;cursor:pointer;background:var(--csf);color:var(--cm);transition:all .15s;font-family:'DM Sans',sans-serif}
+    .preset-btn:hover,.preset-btn.active{background:var(--cp);color:#fff;border-color:var(--cp)}
+    /* DEMAND CARDS */
+    .demand-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-bottom:14px}
+    .dc{border:2px solid var(--cbr);border-radius:9px;padding:9px;cursor:pointer;transition:all .15s;text-align:center}
+    .dc:hover{border-color:var(--ca)}.dc.active{border-color:var(--ca);background:#f0fdf4}
+    .dc .dc-val{font-size:15px;font-weight:700;color:var(--cp);font-family:'Space Mono',monospace}
+    .dc .dc-lbl{font-size:10px;color:var(--cm);margin-top:2px}
+    /* REC BOX */
+    .rec-box{background:linear-gradient(135deg,var(--cp),#166534);color:#fff;border-radius:12px;padding:16px;margin-bottom:14px}
+    .rec-box .rec-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
+    .rec-box .rec-value{font-size:28px;font-weight:700;color:#86efac;font-family:'Space Mono',monospace;margin:4px 0}
+    .rec-box .rec-sub{font-size:12px;opacity:.85}
+    /* REF TABLE */
+    .ref-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+    .ref-table th{background:#f0fdf4;padding:6px 8px;text-align:center;font-weight:700;color:var(--cp);font-size:10px;text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--cbr)}
+    .ref-table td{padding:5px 8px;border-bottom:1px solid var(--cbr);text-align:center}
+    .ref-table .sel-col{background:#dcfce7!important;font-weight:700;color:#14532d}
+    /* GENERATOR/INVERTER chips */
+    .size-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .chip{padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;background:#f1f5f9;color:var(--cm);border:1.5px solid var(--cbr)}
+    .chip.sel{background:var(--cp);color:#fff;border-color:var(--cp)}
+    /* PROGRESS BAR */
+    .pgb{height:8px;border-radius:4px;background:#d1fae5;overflow:hidden;margin:4px 0}
+    .pgf{height:100%;border-radius:4px;background:var(--ca);transition:width .5s}
+    /* NAV BTNS */
+    .nav-btns{display:flex;justify-content:space-between;margin-top:18px}
+    .nav-btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--cp);color:var(--cp);background:transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
+    .nav-btn:hover{background:var(--cp);color:#fff}
+    /* TABLE */
+    table{width:100%;border-collapse:collapse}
+    th{background:#f0fdf4;padding:7px 10px;text-align:left;font-size:10.5px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.3px;border-bottom:2px solid var(--cbr)}
+    td{padding:7px 10px;border-bottom:1px solid var(--cbr);font-size:13px}
+    tr:hover td{background:#f8fafc}
+    /* REPORT */
+    .rpt-hdr{background:var(--cp);color:#fff;padding:14px 18px;border-radius:10px 10px 0 0;margin:-20px -20px 16px;display:flex;justify-content:space-between;align-items:center}
+    .rpt-hdr h2{font-family:'Space Mono',monospace;font-size:14px}
+    .rpt-hdr p{font-size:11px;opacity:.7;margin-top:2px}
+    /* VD GAUGE */
+    .vd-gauge{position:relative;height:12px;background:#e2e8f0;border-radius:6px;overflow:hidden;margin:10px 0}
+    .vd-fill{height:100%;border-radius:6px;transition:width .5s,background .3s}
+    /* PRINT */
+    @media print{
+      .nav,.tab-bar,.nav-btns,.no-print{display:none!important}
+      .panel{display:block!important}
+      .app{max-width:100%;padding:0}
+      .card{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+      body{background:#fff}
+    }
+    @media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}.load-header,.load-row{grid-template-columns:1.8fr .8fr .5fr .8fr .8fr 32px}}
+  </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="authGate" style="position:fixed;inset:0;background:#0c1117;z-index:9999;display:flex;align-items:center;justify-content:center">
+  <div style="text-align:center;color:#fff"><div style="font-size:36px;margin-bottom:12px">⚡</div><div style="font-family:'Space Mono',monospace;font-size:14px;opacity:.7">Verifying session…</div></div>
+</div>
+
+<nav class="nav">
+  <div class="nav-left">
+    <div class="nav-logo">⚡</div>
+    <div><div class="nav-title">Electrical Load Calculator <span>IEC-Grade Professional Tool</span></div></div>
+    <span class="edition-pill">Standard Edition</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user" id="navUser"></span>
+    <button class="sign-out-btn" onclick="signOut()">Sign Out</button>
+  </div>
+</nav>
+
+<div class="app">
+  <div class="tab-bar">
+    <button class="tb active" onclick="T(0)">📋 Project</button>
+    <button class="tb" onclick="T(1)">📝 Loads</button>
+    <button class="tb" onclick="T(2);calcDemand()">📊 Demand</button>
+    <button class="tb" onclick="T(3);calcCurrent()">⚡ Current</button>
+    <button class="tb" onclick="T(4);calcCable()">〰 Cables</button>
+    <button class="tb" onclick="T(5);calcBreaker()">🔌 Breakers</button>
+    <button class="tb" onclick="T(6);calcVD()">📉 Volt Drop</button>
+    <button class="tb" onclick="T(7);calcGen()">🔋 Generator</button>
+    <button class="tb" onclick="T(8);calcInv()">🔆 Inverter</button>
+    <button class="tb" onclick="T(9);calcTx()">🔄 Transformer</button>
+    <button class="tb" onclick="T(10);genReport()">📄 Report</button>
+  </div>
+
+  <!-- ══ P0 PROJECT ══ -->
+  <div class="panel active" id="p0">
+    <div class="card">
+      <div class="card-title">📋 Project Information</div>
+      <div class="g2">
+        <div class="fld"><label>Project Name</label><input id="pName" value="New Electrical Project"></div>
+        <div class="fld"><label>Client / Owner</label><input id="pClient" placeholder="Client name"></div>
+        <div class="fld"><label>Location / Site</label><input id="pLocation" placeholder="Lagos, Nigeria"></div>
+        <div class="fld"><label>Engineer</label><input id="pEngineer" placeholder="Your name"></div>
+        <div class="fld"><label>Date</label><input type="date" id="pDate"></div>
+        <div class="fld"><label>Project Type</label>
+          <select id="pType"><option>Commercial</option><option>Residential</option><option>Industrial (Light)</option><option>Hotel</option><option>Hospital</option><option>School</option><option>Warehouse</option><option>Mall/Retail</option><option>Data Centre</option></select>
+        </div>
+        <div class="fld"><label>Revision / Drawing No.</label><input id="pRev" placeholder="Rev A / DWG-001"></div>
+        <div class="fld"><label>Standard / Code</label>
+          <select id="pCode"><option>IEC 60364</option><option>BS 7671 (18th Ed.)</option><option>NEC (NFPA 70)</option><option>AS/NZS 3000</option><option>SON (Nigeria)</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙ System Configuration</div>
+      <div class="g3">
+        <div class="fld"><label>System Type</label>
+          <select id="sType" onchange="updateSystem()">
+            <option value="3ph">Three Phase</option>
+            <option value="1ph">Single Phase</option>
+          </select>
+        </div>
+        <div class="fld"><label>Supply Voltage</label>
+          <select id="sVolt" onchange="updateSystem()">
+            <option value="415">415V (3Φ)</option><option value="400">400V (3Φ)</option>
+            <option value="230">230V (1Φ)</option><option value="240">240V (1Φ)</option>
+            <option value="120">120V (1Φ)</option>
+          </select>
+        </div>
+        <div class="fld"><label>Power Factor</label><input type="number" id="sPF" value="0.8" min="0.5" max="1" step="0.01"></div>
+        <div class="fld"><label>Frequency</label>
+          <select id="sFreq"><option value="50">50 Hz</option><option value="60">60 Hz</option></select>
+        </div>
+        <div class="fld"><label>Earthing System</label>
+          <select id="sEarth"><option>TN-S</option><option>TN-C-S</option><option>TT</option><option>IT</option></select>
+        </div>
+        <div class="fld"><label>Installation Country</label>
+          <select id="sCountry">
+            <option>Nigeria</option><option>Ghana</option><option>Kenya</option><option>South Africa</option>
+            <option>United Kingdom</option><option>UAE</option><option>India</option><option>USA</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="alert alert-info" style="margin-top:10px">ℹ All modules inherit these settings. Change here to update calculations globally.</div>
+    </div>
+    <div class="nav-btns"><div></div><button class="nav-btn" onclick="T(1)">Next: Loads →</button></div>
+  </div>
+
+  <!-- ══ P1 LOADS ══ -->
+  <div class="panel" id="p1">
+    <div class="card">
+      <div class="card-title">📋 Quick Load Presets</div>
+      <div class="presets">
+        <button class="preset-btn" onclick="loadPreset('house',this)">🏠 2-Bed House</button>
+        <button class="preset-btn" onclick="loadPreset('office',this)">🏢 Office Floor</button>
+        <button class="preset-btn" onclick="loadPreset('school',this)">🏫 School Block</button>
+        <button class="preset-btn" onclick="loadPreset('hotel',this)">🏨 Hotel Block</button>
+        <button class="preset-btn" onclick="loadPreset('warehouse',this)">🏭 Warehouse</button>
+        <button class="preset-btn" onclick="loadPreset('hospital',this)">🏥 Hospital Ward</button>
+        <button class="preset-btn" onclick="loadPreset('retail',this)">🛒 Retail Shop</button>
+        <button class="preset-btn" onclick="loadPreset('factory',this)">⚙ Light Factory</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📝 Load Schedule</div>
+      <div style="overflow-x:auto">
+        <div class="load-header">
+          <span>Description</span><span>Category</span><span>Qty</span>
+          <span>Unit W</span><span>Total W</span><span>PF</span><span>Dem.F</span>
+          <span>Phase</span><span></span>
+        </div>
+        <div id="loadRows"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="addLoad()">+ Add Load</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearLoads()">🗑 Clear All</button>
+      </div>
+      <div class="total-bar">
+        <span style="font-size:13px;font-weight:600">Total Connected Load</span>
+        <span class="big" id="totalConnected">0 W</span>
+      </div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(0)">← Back</button><button class="nav-btn" onclick="T(2);calcDemand()">Next: Demand →</button></div>
+  </div>
+
+  <!-- ══ P2 DEMAND ══ -->
+  <div class="panel" id="p2">
+    <div class="card">
+      <div class="card-title">📊 Demand Factor — Select Building Type</div>
+      <div class="demand-cards" id="demandCards">
+        <div class="dc active" onclick="setDF(0.75,this)"><div class="dc-val">0.75</div><div class="dc-lbl">Office</div></div>
+        <div class="dc" onclick="setDF(0.70,this)"><div class="dc-val">0.70</div><div class="dc-lbl">Residential</div></div>
+        <div class="dc" onclick="setDF(0.65,this)"><div class="dc-val">0.65</div><div class="dc-lbl">Hotel</div></div>
+        <div class="dc" onclick="setDF(0.80,this)"><div class="dc-val">0.80</div><div class="dc-lbl">Hospital</div></div>
+        <div class="dc" onclick="setDF(0.60,this)"><div class="dc-val">0.60</div><div class="dc-lbl">School</div></div>
+        <div class="dc" onclick="setDF(0.50,this)"><div class="dc-val">0.50</div><div class="dc-lbl">Warehouse</div></div>
+        <div class="dc" onclick="setDF(0.85,this)"><div class="dc-val">0.85</div><div class="dc-lbl">Mall/Retail</div></div>
+        <div class="dc" onclick="setDF(0.90,this)"><div class="dc-val">0.90</div><div class="dc-lbl">Industrial</div></div>
+        <div class="dc" onclick="setDF(0.95,this)"><div class="dc-val">0.95</div><div class="dc-lbl">Data Centre</div></div>
+      </div>
+      <div class="g3">
+        <div class="fld"><label>Demand Factor</label><input type="number" id="demandFactor" value="0.75" min="0.1" max="1" step="0.01" oninput="calcDemand()"></div>
+        <div class="fld"><label>Diversity Factor</label><input type="number" id="diversityFactor" value="1.0" min="0.5" max="2" step="0.01" oninput="calcDemand()"></div>
+        <div class="fld"><label>Growth Margin (%)</label><input type="number" id="growthMargin" value="20" min="0" max="100" oninput="calcDemand()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📈 Demand Results</div>
+      <div class="formula">Demand Load = Connected Load × Demand Factor ÷ Diversity Factor &nbsp;|&nbsp; Design = Demand kVA × (1 + Growth%)</div>
+      <div class="metrics">
+        <div class="metric"><div class="val" id="d_connected">0</div><div class="unit">W</div><div class="lbl">Connected</div></div>
+        <div class="metric"><div class="val" id="d_demand">0</div><div class="unit">W</div><div class="lbl">Demand</div></div>
+        <div class="metric"><div class="val" id="d_kw">0</div><div class="unit">kW</div><div class="lbl">Demand kW</div></div>
+        <div class="metric hi"><div class="val" id="d_kva">0</div><div class="unit">kVA</div><div class="lbl">Apparent kVA</div></div>
+        <div class="metric"><div class="val" id="d_kvar">0</div><div class="unit">kVAR</div><div class="lbl">Reactive</div></div>
+        <div class="metric amber"><div class="val" id="d_design">0</div><div class="unit">kVA</div><div class="lbl">Design + Margin</div></div>
+      </div>
+      <div id="demandAlert"></div>
+      <div style="margin-top:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Load by Phase</div>
+        <div id="phaseBar"></div>
+      </div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(1)">← Back</button><button class="nav-btn" onclick="T(3);calcCurrent()">Next: Current →</button></div>
+  </div>
+
+  <!-- ══ P3 CURRENT ══ -->
+  <div class="panel" id="p3">
+    <div class="card">
+      <div class="card-title">⚡ Current Calculation</div>
+      <div class="g3">
+        <div class="fld"><label>Power (kW)</label><input type="number" id="curKW" value="0" step="0.1" oninput="calcCurrent()"></div>
+        <div class="fld"><label>Power Factor</label><input type="number" id="curPF" value="0.8" step="0.01" min="0.1" max="1" oninput="calcCurrent()"></div>
+        <div class="fld"><label>Efficiency (%)</label><input type="number" id="curEff" value="100" step="1" oninput="calcCurrent()"></div>
+      </div>
+      <div class="formula" id="curFormula">3Φ: I = P ÷ (√3 × V × PF × η)</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importFromDemand()">⬇ Import kW from Demand</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Results</div>
+      <div class="metrics">
+        <div class="metric"><div class="val" id="c_line">0</div><div class="unit">A</div><div class="lbl">Line Current</div></div>
+        <div class="metric hi"><div class="val" id="c_design">0</div><div class="unit">A</div><div class="lbl">Design ×1.25</div></div>
+        <div class="metric"><div class="val" id="c_kva">0</div><div class="unit">kVA</div><div class="lbl">Apparent kVA</div></div>
+        <div class="metric"><div class="val" id="c_kvar">0</div><div class="unit">kVAR</div><div class="lbl">Reactive</div></div>
+      </div>
+      <div class="alert alert-info">ℹ 125% design factor applied per IEC 60364. Use <strong>Design Current</strong> for cable and breaker sizing.</div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(2)">← Back</button><button class="nav-btn" onclick="T(4);calcCable()">Next: Cables →</button></div>
+  </div>
+
+  <!-- ══ P4 CABLES ══ -->
+  <div class="panel" id="p4">
+    <div class="card">
+      <div class="card-title">〰 Cable Parameters</div>
+      <div class="g3">
+        <div class="fld"><label>Design Current (A)</label><input type="number" id="cabI" value="0" step="0.1" oninput="calcCable()"></div>
+        <div class="fld"><label>Cable Material</label>
+          <select id="cabMat" onchange="calcCable()"><option value="copper">Copper</option><option value="aluminium">Aluminium</option></select>
+        </div>
+        <div class="fld"><label>Insulation</label>
+          <select id="cabIns" onchange="calcCable()"><option value="XLPE">XLPE</option><option value="PVC">PVC</option></select>
+        </div>
+        <div class="fld"><label>Installation Method</label>
+          <select id="cabMethod" onchange="calcCable()">
+            <option value="A1">A1 — Conduit in thermal insulation</option>
+            <option value="A2">A2 — Multi-core in insulated wall</option>
+            <option value="B1">B1 — Conduit on wall/ceiling</option>
+            <option value="B2">B2 — Trunking on wall</option>
+            <option value="C">C — Clipped direct to surface</option>
+            <option value="D1">D1 — In duct in ground</option>
+            <option value="D2">D2 — Buried direct in ground</option>
+            <option value="E">E — Free air / cable tray (perforated)</option>
+            <option value="F">F — Free air (single layer, touching)</option>
+          </select>
+        </div>
+        <div class="fld"><label>Ambient Temp (°C)</label><input type="number" id="cabTemp" value="30" min="10" max="70" oninput="calcCable()"></div>
+        <div class="fld"><label>Circuits Grouped</label><input type="number" id="cabGroup" value="1" min="1" max="10" oninput="calcCable()"></div>
+        <div class="fld"><label>Run Length (m)</label><input type="number" id="cabLen" value="50" min="1" oninput="calcCable()"></div>
+        <div class="fld"><label>VD Limit (%)</label>
+          <select id="cabVDL" onchange="calcCable()"><option value="3">3% — IEC Preferred</option><option value="5">5% — IEC Acceptable</option><option value="2.5">2.5% — NEC</option></select>
+        </div>
+        <div class="fld"><label>No. of Cores</label>
+          <select id="cabCores" onchange="calcCable()">
+            <option value="2">2-Core</option><option value="3">3-Core</option>
+            <option value="4">4-Core (3P+N)</option><option value="5">5-Core (3P+N+E)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importDesignCurrent()">⬇ Import Design Current</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Cable Recommendation</div>
+      <div id="cableResult"><div class="alert alert-blue">ℹ Enter design current to get a recommendation.</div></div>
+      <div style="margin-top:14px;font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">IEC Reference — Cu XLPE Method C 30°C</div>
+      <div style="overflow-x:auto"><table class="ref-table" id="cableRefTable"></table></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(3)">← Back</button><button class="nav-btn" onclick="T(5);calcBreaker()">Next: Breakers →</button></div>
+  </div>
+
+  <!-- ══ P5 BREAKERS ══ -->
+  <div class="panel" id="p5">
+    <div class="card">
+      <div class="card-title">🔌 Breaker Selection</div>
+      <div class="g3">
+        <div class="fld"><label>Full Load Current (A)</label><input type="number" id="brkI" value="0" step="0.1" oninput="calcBreaker()"></div>
+        <div class="fld"><label>Load Type</label>
+          <select id="brkType" onchange="calcBreaker()">
+            <option value="general">General / Resistive</option>
+            <option value="motor">Motor Load</option>
+            <option value="continuous">Continuous Load</option>
+            <option value="lighting">Lighting Circuit</option>
+            <option value="mixed">Mixed Load</option>
+          </select>
+        </div>
+        <div class="fld"><label>Breaking Capacity (Icu)</label>
+          <select id="brkIcu" onchange="calcBreaker()">
+            <option value="6">6 kA — Domestic</option>
+            <option value="10">10 kA — Commercial</option>
+            <option value="25">25 kA — Industrial</option>
+            <option value="36">36 kA — HV Substation</option>
+            <option value="50">50 kA — Heavy Industrial</option>
+          </select>
+        </div>
+      </div>
+      <div class="formula">General: Rating ≥ FLC &nbsp;|&nbsp; Continuous / Motor: Rating ≥ 1.25 × FLC &nbsp;|&nbsp; Select next standard rating above minimum</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importCurrentForBreaker()">⬇ Import Line Current</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Recommended Breaker</div>
+      <div id="breakerResult"><div class="alert alert-blue">ℹ Enter full load current to get a recommendation.</div></div>
+      <div style="margin-top:12px;font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Standard Ratings (A)</div>
+      <div class="size-chips" id="breakerChips"></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(4)">← Back</button><button class="nav-btn" onclick="T(6);calcVD()">Next: Volt Drop →</button></div>
+  </div>
+
+  <!-- ══ P6 VOLT DROP ══ -->
+  <div class="panel" id="p6">
+    <div class="card">
+      <div class="card-title">📉 Voltage Drop Inputs</div>
+      <div class="g3">
+        <div class="fld"><label>Load Current (A)</label><input type="number" id="vdI" value="0" step="0.1" oninput="calcVD()"></div>
+        <div class="fld"><label>Cable Length (m)</label><input type="number" id="vdLen" value="50" oninput="calcVD()"></div>
+        <div class="fld"><label>Cable Size (mm²)</label>
+          <select id="vdSize" onchange="calcVD()">
+            <option>1.5</option><option>2.5</option><option>4</option><option>6</option><option>10</option>
+            <option>16</option><option>25</option><option>35</option><option value="50" selected>50</option>
+            <option>70</option><option>95</option><option>120</option><option>150</option>
+            <option>185</option><option>240</option><option>300</option>
+          </select>
+        </div>
+        <div class="fld"><label>Conductor Material</label>
+          <select id="vdMat" onchange="calcVD()"><option value="copper">Copper</option><option value="aluminium">Aluminium</option></select>
+        </div>
+        <div class="fld"><label>System</label>
+          <select id="vdSys" onchange="calcVD()"><option value="3ph">Three Phase</option><option value="1ph">Single Phase</option></select>
+        </div>
+        <div class="fld"><label>VD Standard</label>
+          <select id="vdStd" onchange="calcVD()">
+            <option value="3">IEC 3% — Preferred</option>
+            <option value="5">IEC 5% — Acceptable</option>
+            <option value="2.5">NEC 2.5%</option>
+            <option value="4">BS 7671 4%</option>
+          </select>
+        </div>
+      </div>
+      <div class="formula" id="vdFormula">3Φ: VD = (√3 × L × I × R) ÷ 1000 &nbsp;|&nbsp; 1Φ: VD = (2 × L × I × R) ÷ 1000</div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importForVD()">⬇ Import from Cables Module</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📋 Voltage Drop Results</div>
+      <div id="vdResult"><div class="alert alert-blue">ℹ Enter current and cable details to calculate voltage drop.</div></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(5)">← Back</button><button class="nav-btn" onclick="T(7);calcGen()">Next: Generator →</button></div>
+  </div>
+
+  <!-- ══ P7 GENERATOR ══ -->
+  <div class="panel" id="p7">
+    <div class="card">
+      <div class="card-title">🔋 Generator Sizing Inputs</div>
+      <div class="g3">
+        <div class="fld"><label>Demand Load (kW)</label><input type="number" id="genKW" value="0" step="0.1" oninput="calcGen()"></div>
+        <div class="fld"><label>Power Factor</label><input type="number" id="genPF" value="0.8" step="0.01" oninput="calcGen()"></div>
+        <div class="fld"><label>Motor Start Margin (%)</label><input type="number" id="genMM" value="25" min="0" max="100" oninput="calcGen()"></div>
+        <div class="fld"><label>Spare Margin (%)</label><input type="number" id="genSM" value="20" min="0" max="50" oninput="calcGen()"></div>
+        <div class="fld"><label>Load Type</label>
+          <select id="genLT" onchange="calcGen()">
+            <option>Mixed (Typical)</option><option>Mostly Resistive</option>
+            <option>Heavy Motor Loads</option><option>IT / Data Centre</option>
+            <option>Medical Equipment</option>
+          </select>
+        </div>
+        <div class="fld"><label>Fuel Type</label>
+          <select id="genFuel"><option>Diesel</option><option>Gas (LPG/NG)</option><option>Dual Fuel</option><option>Petrol</option></select>
+        </div>
+        <div class="fld"><label>Supply Type</label>
+          <select id="genSupply"><option>Standby (STP)</option><option>Prime (PRP)</option><option>Continuous (COP)</option></select>
+        </div>
+        <div class="fld"><label>Enclosure</label>
+          <select id="genEnc"><option>Open (Drip-proof)</option><option>Soundproofed (Silent)</option><option>Container Type</option></select>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importDemandToGen()">⬇ Import from Demand</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Generator Recommendation</div>
+      <div id="genResult"><div class="alert alert-blue">ℹ Enter demand load or import from the Demand tab.</div></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(6)">← Back</button><button class="nav-btn" onclick="T(8);calcInv()">Next: Inverter →</button></div>
+  </div>
+
+  <!-- ══ P8 INVERTER ══ -->
+  <div class="panel" id="p8">
+    <div class="card">
+      <div class="card-title">🔆 Inverter & Battery Sizing</div>
+      <div class="g3">
+        <div class="fld"><label>Load to Back Up (W)</label><input type="number" id="invLoad" value="0" step="50" oninput="calcInv()"></div>
+        <div class="fld"><label>Backup Duration (hrs)</label><input type="number" id="invHrs" value="4" step="0.5" min="0.5" oninput="calcInv()"></div>
+        <div class="fld"><label>Battery Voltage (V)</label>
+          <select id="invBV" onchange="calcInv()"><option value="12">12V</option><option value="24">24V</option><option value="48" selected>48V</option></select>
+        </div>
+        <div class="fld"><label>Battery Efficiency (%)</label><input type="number" id="invBE" value="85" min="60" max="100" oninput="calcInv()"></div>
+        <div class="fld"><label>Depth of Discharge (%)</label><input type="number" id="invDD" value="80" min="20" max="100" oninput="calcInv()"></div>
+        <div class="fld"><label>Inverter Efficiency (%)</label><input type="number" id="invIE" value="92" min="70" max="99" oninput="calcInv()"></div>
+        <div class="fld"><label>Battery Ah Rating</label>
+          <select id="invBAh" onchange="calcInv()">
+            <option value="100">100 Ah</option><option value="150">150 Ah</option>
+            <option value="200" selected>200 Ah</option><option value="250">250 Ah</option>
+            <option value="300">300 Ah</option>
+          </select>
+        </div>
+        <div class="fld"><label>Battery Type</label>
+          <select id="invBT">
+            <option>Lead Acid (FLA)</option><option>AGM (Sealed)</option>
+            <option>Gel (VRLA)</option><option>LiFePO4 (Lithium)</option>
+          </select>
+        </div>
+        <div class="fld"><label>Inverter Type</label>
+          <select id="invType">
+            <option>Modified Sine Wave</option><option>Pure Sine Wave</option>
+            <option>Hybrid (Solar-ready)</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importDemandToInv()">⬇ Import from Demand</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Inverter & Battery Results</div>
+      <div id="invResult"><div class="alert alert-blue">ℹ Enter backup load or import from Demand tab.</div></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(7)">← Back</button><button class="nav-btn" onclick="T(9);calcTx()">Next: Transformer →</button></div>
+  </div>
+
+  <!-- ══ P9 TRANSFORMER ══ -->
+  <div class="panel" id="p9">
+    <div class="card">
+      <div class="card-title">🔄 Transformer Sizing</div>
+      <div class="g3">
+        <div class="fld"><label>Load kVA</label><input type="number" id="txKVA" value="0" step="1" oninput="calcTx()"></div>
+        <div class="fld"><label>Power Factor</label><input type="number" id="txPF" value="0.8" step="0.01" oninput="calcTx()"></div>
+        <div class="fld"><label>Loading Factor (%)</label><input type="number" id="txLF" value="80" min="50" max="100" oninput="calcTx()"></div>
+        <div class="fld"><label>Primary Voltage</label>
+          <select id="txPri" onchange="calcTx()">
+            <option value="11000">11kV</option><option value="33000">33kV</option>
+            <option value="415">415V</option><option value="400">400V</option>
+          </select>
+        </div>
+        <div class="fld"><label>Secondary Voltage</label>
+          <select id="txSec" onchange="calcTx()">
+            <option value="415">415V</option><option value="400">400V</option>
+            <option value="230">230V</option><option value="240">240V</option>
+          </select>
+        </div>
+        <div class="fld"><label>Vector Group</label>
+          <select id="txVG"><option>Dyn11</option><option>Dyn1</option><option>YNyn0</option><option>Dzn0</option></select>
+        </div>
+        <div class="fld"><label>Cooling Type</label>
+          <select id="txCool"><option>ONAN (Oil Natural)</option><option>ONAF (Oil Natural, Air Forced)</option><option>Dry Type (AN)</option><option>Cast Resin</option></select>
+        </div>
+        <div class="fld"><label>Impedance (%)</label><input type="number" id="txImpedance" value="4" min="1" max="10" step="0.1" oninput="calcTx()"></div>
+        <div class="fld"><label>Installation</label>
+          <select id="txInst"><option>Indoor</option><option>Outdoor (Weatherproof)</option><option>Pad-mounted</option><option>Pole-mounted</option></select>
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-amber btn-sm" onclick="importDemandToTx()">⬇ Import from Demand</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">✅ Transformer Recommendation</div>
+      <div id="txResult"><div class="alert alert-blue">ℹ Enter load kVA or import from Demand tab.</div></div>
+    </div>
+    <div class="nav-btns"><button class="nav-btn" onclick="T(8)">← Back</button><button class="nav-btn" onclick="T(10);genReport()">Next: Report →</button></div>
+  </div>
+
+  <!-- ══ P10 REPORT ══ -->
+  <div class="panel" id="p10">
+    <div class="card no-print">
+      <div class="card-title">📄 Report Options</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="genReport()">🔄 Generate Report</button>
+        <button class="btn btn-green" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+      <div class="alert alert-info" style="margin-top:12px">ℹ Click <strong>Print / Save PDF</strong> then choose <strong>"Save as PDF"</strong> in your browser print dialog. Enable <em>Background graphics</em> for best results.</div>
+    </div>
+    <div id="reportOutput"></div>
+  </div>
+
+</div>
+
+<script>
+// ═══ SUPABASE AUTH ═══
+const SB_URL='https://uxpgdaetneoaaevgjoai.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
+const{createClient}=supabase;const sb=createClient(SB_URL,SB_KEY);
+(async()=>{const{data}=await sb.auth.getSession();if(!data.session){window.location.href='/auth/';return;}const name=data.session.user.user_metadata?.full_name||data.session.user.email;document.getElementById('navUser').textContent=name;document.getElementById('authGate').style.display='none';})();
+async function signOut(){await sb.auth.signOut();window.location.href='/auth/';}
+
+// ═══ DATA TABLES ═══
+const CD={copper:{XLPE:{A1:[{s:1.5,I:13.5},{s:2.5,I:18},{s:4,I:24},{s:6,I:31},{s:10,I:42},{s:16,I:56},{s:25,I:73},{s:35,I:89},{s:50,I:108},{s:70,I:136},{s:95,I:164},{s:120,I:188},{s:150,I:216},{s:185,I:245},{s:240,I:286},{s:300,I:328}],A2:[{s:1.5,I:13},{s:2.5,I:17.5},{s:4,I:23},{s:6,I:29},{s:10,I:39},{s:16,I:52},{s:25,I:68},{s:35,I:83},{s:50,I:99},{s:70,I:125},{s:95,I:150},{s:120,I:172},{s:150,I:196},{s:185,I:223},{s:240,I:261},{s:300,I:298}],B1:[{s:1.5,I:15.5},{s:2.5,I:21},{s:4,I:28},{s:6,I:36},{s:10,I:50},{s:16,I:66},{s:25,I:84},{s:35,I:104},{s:50,I:125},{s:70,I:160},{s:95,I:194},{s:120,I:225},{s:150,I:260},{s:185,I:297},{s:240,I:350},{s:300,I:400}],B2:[{s:1.5,I:15},{s:2.5,I:20},{s:4,I:27},{s:6,I:34},{s:10,I:46},{s:16,I:62},{s:25,I:80},{s:35,I:99},{s:50,I:118},{s:70,I:149},{s:95,I:179},{s:120,I:206},{s:150,I:236},{s:185,I:268},{s:240,I:316},{s:300,I:360}],C:[{s:1.5,I:17.5},{s:2.5,I:24},{s:4,I:32},{s:6,I:41},{s:10,I:57},{s:16,I:76},{s:25,I:96},{s:35,I:119},{s:50,I:144},{s:70,I:184},{s:95,I:223},{s:120,I:259},{s:150,I:299},{s:185,I:341},{s:240,I:403},{s:300,I:464}],D1:[{s:1.5,I:18},{s:2.5,I:24},{s:4,I:31},{s:6,I:39},{s:10,I:52},{s:16,I:67},{s:25,I:86},{s:35,I:103},{s:50,I:122},{s:70,I:151},{s:95,I:179},{s:120,I:203},{s:150,I:230},{s:185,I:258},{s:240,I:297},{s:300,I:336}],D2:[{s:1.5,I:22},{s:2.5,I:29},{s:4,I:38},{s:6,I:47},{s:10,I:63},{s:16,I:81},{s:25,I:103},{s:35,I:122},{s:50,I:144},{s:70,I:178},{s:95,I:211},{s:120,I:240},{s:150,I:271},{s:185,I:304},{s:240,I:351},{s:300,I:396}],E:[{s:1.5,I:19.5},{s:2.5,I:27},{s:4,I:36},{s:6,I:46},{s:10,I:63},{s:16,I:85},{s:25,I:110},{s:35,I:137},{s:50,I:167},{s:70,I:214},{s:95,I:261},{s:120,I:303},{s:150,I:349},{s:185,I:400},{s:240,I:472},{s:300,I:545}],F:[{s:1.5,I:22},{s:2.5,I:30},{s:4,I:40},{s:6,I:52},{s:10,I:71},{s:16,I:96},{s:25,I:119},{s:35,I:147},{s:50,I:179},{s:70,I:229},{s:95,I:278},{s:120,I:322},{s:150,I:371},{s:185,I:424},{s:240,I:500},{s:300,I:576}]},PVC:{C:[{s:1.5,I:15},{s:2.5,I:20},{s:4,I:27},{s:6,I:34},{s:10,I:46},{s:16,I:62},{s:25,I:80},{s:35,I:99},{s:50,I:119},{s:70,I:151},{s:95,I:182},{s:120,I:210},{s:150,I:240},{s:185,I:273},{s:240,I:321},{s:300,I:367}],E:[{s:1.5,I:16.5},{s:2.5,I:23},{s:4,I:30},{s:6,I:38},{s:10,I:52},{s:16,I:69},{s:25,I:90},{s:35,I:111},{s:50,I:133},{s:70,I:171},{s:95,I:207},{s:120,I:239},{s:150,I:275},{s:185,I:314},{s:240,I:370},{s:300,I:424}]}},aluminium:{XLPE:{C:[{s:16,I:59},{s:25,I:75},{s:35,I:92},{s:50,I:110},{s:70,I:140},{s:95,I:169},{s:120,I:196},{s:150,I:225},{s:185,I:259},{s:240,I:305},{s:300,I:351}],E:[{s:16,I:67},{s:25,I:86},{s:35,I:103},{s:50,I:128},{s:70,I:163},{s:95,I:198},{s:120,I:229},{s:150,I:263},{s:185,I:303},{s:240,I:358},{s:300,I:413}]},PVC:{C:[{s:16,I:48},{s:25,I:62},{s:35,I:77},{s:50,I:92},{s:70,I:117},{s:95,I:141},{s:120,I:162},{s:150,I:187},{s:185,I:213},{s:240,I:251},{s:300,I:286}]}}};
+const RESIST={copper:{1.5:12.1,2.5:7.41,4:4.61,6:3.08,10:1.83,16:1.15,25:.727,35:.524,50:.387,70:.268,95:.193,120:.153,150:.124,185:.0991,240:.0754,300:.0601},aluminium:{16:1.91,25:1.20,35:.868,50:.641,70:.443,95:.320,120:.253,150:.206,185:.164,240:.125,300:.100}};
+const TD={XLPE:{25:1.04,30:1.0,35:.96,40:.91,45:.87,50:.82,55:.76,60:.71,65:.65,70:.58},PVC:{25:1.03,30:1.0,35:.94,40:.87,45:.79,50:.71,55:.61,60:.50}};
+const GD=[1.0,.80,.70,.65,.60,.57,.54,.52,.50,.48];
+const BR=[6,10,16,20,25,32,40,50,63,80,100,125,160,200,250,315,400,500,630,800,1000];
+const GS=[10,20,30,50,75,100,150,200,250,300,400,500,750,1000,1500,2000];
+const TS=[25,50,100,160,200,250,315,400,500,630,800,1000,1250,1600,2000,2500,3150];
+
+const PRESETS={
+  house:[{desc:'Bedroom Lighting',cat:'Lighting',qty:8,uw:9,pf:.95,df:.7,phase:'R'},{desc:'Living Room Lighting',cat:'Lighting',qty:6,uw:9,pf:.95,df:.7,phase:'Y'},{desc:'Socket Outlets',cat:'Socket Outlets',qty:10,uw:150,pf:.9,df:.4,phase:'R'},{desc:'Kitchen Appliances',cat:'Kitchen',qty:4,uw:500,pf:.9,df:.6,phase:'Y'},{desc:'Air Conditioner',cat:'HVAC',qty:2,uw:1100,pf:.85,df:.8,phase:'B'},{desc:'Water Heater',cat:'Kitchen',qty:1,uw:2000,pf:1,df:.3,phase:'R'},{desc:'Refrigerator',cat:'Kitchen',qty:1,uw:200,pf:.85,df:.9,phase:'B'},{desc:'Water Pump',cat:'Pumps',qty:1,uw:750,pf:.8,df:.5,phase:'B'},{desc:'TV & Electronics',cat:'IT Loads',qty:3,uw:120,pf:.9,df:.7,phase:'Y'},{desc:'Spare',cat:'Spare',qty:1,uw:500,pf:.9,df:1,phase:'R+Y+B'}],
+  office:[{desc:'General Lighting',cat:'Lighting',qty:40,uw:18,pf:.95,df:1,phase:'R'},{desc:'Emergency Lighting',cat:'Lighting',qty:10,uw:9,pf:.95,df:1,phase:'R'},{desc:'Power Sockets',cat:'Socket Outlets',qty:30,uw:150,pf:.9,df:.4,phase:'Y'},{desc:'Workstation PCs',cat:'IT Loads',qty:20,uw:250,pf:.9,df:.8,phase:'B'},{desc:'Server Room',cat:'IT Loads',qty:1,uw:3000,pf:.9,df:1,phase:'R+Y+B'},{desc:'Air Handling Unit',cat:'HVAC',qty:2,uw:5500,pf:.85,df:.9,phase:'R+Y+B'},{desc:'Fan Coil Units',cat:'HVAC',qty:8,uw:750,pf:.85,df:.8,phase:'Y'},{desc:'Lifts',cat:'Lifts',qty:1,uw:11000,pf:.8,df:.5,phase:'R+Y+B'},{desc:'Canteen',cat:'Kitchen',qty:1,uw:6000,pf:.9,df:.6,phase:'B'},{desc:'Spare 20%',cat:'Spare',qty:1,uw:5000,pf:.9,df:1,phase:'R+Y+B'}],
+  school:[{desc:'Classroom Lighting',cat:'Lighting',qty:60,uw:18,pf:.95,df:.9,phase:'R'},{desc:'Classroom Sockets',cat:'Socket Outlets',qty:30,uw:100,pf:.9,df:.3,phase:'R'},{desc:'Computer Lab',cat:'IT Loads',qty:30,uw:250,pf:.9,df:.8,phase:'Y'},{desc:'Admin Block',cat:'IT Loads',qty:10,uw:200,pf:.9,df:.7,phase:'B'},{desc:'Air Conditioning',cat:'HVAC',qty:4,uw:1100,pf:.85,df:.7,phase:'B'},{desc:'Kitchen',cat:'Kitchen',qty:1,uw:4000,pf:.9,df:.5,phase:'Y'},{desc:'Water Pumps',cat:'Pumps',qty:2,uw:750,pf:.8,df:.4,phase:'R'},{desc:'Spare',cat:'Spare',qty:1,uw:2000,pf:.9,df:1,phase:'R+Y+B'}],
+  hotel:[{desc:'Guest Room Lighting',cat:'Lighting',qty:50,uw:60,pf:.9,df:.6,phase:'R'},{desc:'Corridor Lighting',cat:'Lighting',qty:40,uw:18,pf:.95,df:1,phase:'Y'},{desc:'Guest Room Sockets',cat:'Socket Outlets',qty:100,uw:200,pf:.9,df:.4,phase:'B'},{desc:'Room Air Con',cat:'HVAC',qty:50,uw:1100,pf:.85,df:.6,phase:'R'},{desc:'Chiller Plant',cat:'HVAC',qty:1,uw:50000,pf:.85,df:.7,phase:'R+Y+B'},{desc:'Restaurant Kitchen',cat:'Kitchen',qty:1,uw:20000,pf:.9,df:.7,phase:'Y'},{desc:'Lifts',cat:'Lifts',qty:4,uw:11000,pf:.8,df:.4,phase:'R+Y+B'},{desc:'Laundry',cat:'Special',qty:1,uw:15000,pf:.9,df:.5,phase:'B'},{desc:'Spare',cat:'Spare',qty:1,uw:10000,pf:.9,df:1,phase:'R+Y+B'}],
+  warehouse:[{desc:'High Bay Lighting',cat:'Lighting',qty:30,uw:150,pf:.95,df:.9,phase:'R'},{desc:'Office Lighting',cat:'Lighting',qty:20,uw:18,pf:.95,df:.9,phase:'R'},{desc:'Power Sockets',cat:'Socket Outlets',qty:20,uw:200,pf:.9,df:.3,phase:'Y'},{desc:'Conveyor Motors',cat:'Motors',qty:3,uw:5500,pf:.8,df:.7,phase:'B'},{desc:'Forklift Chargers',cat:'Special',qty:4,uw:3300,pf:.9,df:.5,phase:'Y'},{desc:'Compressors',cat:'Motors',qty:2,uw:7500,pf:.8,df:.6,phase:'B'},{desc:'Exhaust Fans',cat:'HVAC',qty:6,uw:750,pf:.85,df:.8,phase:'R'},{desc:'Water Pump',cat:'Pumps',qty:2,uw:1500,pf:.8,df:.4,phase:'R+Y+B'},{desc:'Spare',cat:'Spare',qty:1,uw:5000,pf:.9,df:1,phase:'R+Y+B'}],
+  hospital:[{desc:'Ward Lighting',cat:'Lighting',qty:80,uw:18,pf:.95,df:1,phase:'R'},{desc:'Theatre Lighting',cat:'Lighting',qty:20,uw:100,pf:.95,df:.5,phase:'Y'},{desc:'Medical Sockets',cat:'Socket Outlets',qty:60,uw:200,pf:.9,df:.6,phase:'B'},{desc:'HVAC / AHU',cat:'HVAC',qty:4,uw:7500,pf:.85,df:.9,phase:'R+Y+B'},{desc:'Medical Equipment',cat:'Special',qty:10,uw:2000,pf:.9,df:.7,phase:'R+Y+B'},{desc:'Sterilisation',cat:'Special',qty:2,uw:5000,pf:.9,df:.4,phase:'Y'},{desc:'Lifts',cat:'Lifts',qty:2,uw:11000,pf:.8,df:.4,phase:'R+Y+B'},{desc:'Kitchen/Canteen',cat:'Kitchen',qty:1,uw:10000,pf:.9,df:.6,phase:'B'},{desc:'Pumps',cat:'Pumps',qty:4,uw:2200,pf:.8,df:.6,phase:'R+Y+B'},{desc:'Spare',cat:'Spare',qty:1,uw:10000,pf:.9,df:1,phase:'R+Y+B'}],
+  retail:[{desc:'Display Lighting',cat:'Lighting',qty:50,uw:35,pf:.9,df:1,phase:'R'},{desc:'Back Office',cat:'Lighting',qty:10,uw:18,pf:.95,df:.9,phase:'Y'},{desc:'POS & Sockets',cat:'Socket Outlets',qty:20,uw:200,pf:.9,df:.5,phase:'B'},{desc:'Air Conditioning',cat:'HVAC',qty:4,uw:2200,pf:.85,df:.8,phase:'R+Y+B'},{desc:'Refrigeration',cat:'Special',qty:6,uw:1500,pf:.85,df:.9,phase:'Y'},{desc:'CCTV & Security',cat:'IT Loads',qty:1,uw:500,pf:.9,df:1,phase:'R'},{desc:'Spare',cat:'Spare',qty:1,uw:3000,pf:.9,df:1,phase:'R+Y+B'}],
+  factory:[{desc:'Machine Shop Lighting',cat:'Lighting',qty:30,uw:150,pf:.95,df:.9,phase:'R'},{desc:'Office Lighting',cat:'Lighting',qty:15,uw:18,pf:.95,df:.9,phase:'R'},{desc:'Production Machines',cat:'Motors',qty:5,uw:11000,pf:.8,df:.7,phase:'R+Y+B'},{desc:'Conveyor Motors',cat:'Motors',qty:4,uw:5500,pf:.8,df:.7,phase:'B'},{desc:'Compressors',cat:'Motors',qty:2,uw:15000,pf:.8,df:.6,phase:'R+Y+B'},{desc:'Office Sockets',cat:'Socket Outlets',qty:20,uw:150,pf:.9,df:.4,phase:'Y'},{desc:'Welding Points',cat:'Special',qty:4,uw:7000,pf:.7,df:.4,phase:'R+Y+B'},{desc:'Exhaust Ventilation',cat:'HVAC',qty:6,uw:1500,pf:.85,df:.8,phase:'B'},{desc:'Spare',cat:'Spare',qty:1,uw:10000,pf:.9,df:1,phase:'R+Y+B'}]
+};
+
+// ═══ STATE ═══
+let loads=[],nid=1;
+
+// ═══ HELPERS ═══
+const $=id=>document.getElementById(id);
+const gV=()=>parseFloat($('sVolt').value)||415;
+const gSys=()=>$('sType').value;
+const gPF=()=>parseFloat($('sPF').value)||0.8;
+const gTW=()=>loads.reduce((s,l)=>s+l.qty*l.uw,0);
+
+function T(n){document.querySelectorAll('.tb').forEach((t,i)=>t.classList.toggle('active',i===n));document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));}
+
+function updateSystem(){$('curFormula').textContent=gSys()==='3ph'?'3Φ: I = P ÷ (√3 × V × PF × η)':'1Φ: I = P ÷ (V × PF × η)';$('vdFormula').textContent=gSys()==='3ph'?'3Φ: VD = (√3 × L × I × R) ÷ 1000':'1Φ: VD = (2 × L × I × R) ÷ 1000';calcCurrent();calcVD();}
+
+// ═══ LOADS ═══
+function addLoad(d){const id=nid++;const def=d||{desc:'',cat:'Lighting',qty:1,uw:100,pf:1.0,df:1.0,phase:'R'};loads.push({id,...def});renderLoads();}
+function renderLoads(){
+  const c=$('loadRows');c.innerHTML='';
+  const cats=['Lighting','Socket Outlets','HVAC','Motors','Pumps','Lifts','IT Loads','Kitchen','Special','Spare'];
+  const phases=['R','Y','B','R+Y+B'];
+  loads.forEach(l=>{
+    const r=document.createElement('div');r.className='load-row';
+    r.innerHTML=`<input type="text" value="${l.desc}" placeholder="Description" oninput="UL(${l.id},'desc',this.value)">
+      <select onchange="UL(${l.id},'cat',this.value)">${cats.map(c=>`<option${c===l.cat?' selected':''}>${c}</option>`).join('')}</select>
+      <input type="number" value="${l.qty}" min="1" style="text-align:center" oninput="UL(${l.id},'qty',+this.value)">
+      <input type="number" value="${l.uw}" min="0" oninput="UL(${l.id},'uw',+this.value)">
+      <input type="number" value="${(l.qty*l.uw).toFixed(0)}" readonly>
+      <input type="number" value="${l.pf}" min="0.5" max="1" step="0.01" oninput="UL(${l.id},'pf',+this.value)">
+      <input type="number" value="${l.df}" min="0.1" max="1" step="0.01" oninput="UL(${l.id},'df',+this.value)">
+      <select onchange="UL(${l.id},'phase',this.value)">${phases.map(p=>`<option${p===l.phase?' selected':''}>${p}</option>`).join('')}</select>
+      <button class="del-btn" onclick="DL(${l.id})">×</button>`;
+    c.appendChild(r);
+  });
+  updateTotal();
+}
+function UL(id,f,v){const l=loads.find(x=>x.id===id);if(l){l[f]=v;renderLoads();}}
+function DL(id){loads=loads.filter(l=>l.id!==id);renderLoads();}
+function clearLoads(){loads=[];nid=1;renderLoads();}
+function updateTotal(){const t=gTW();$('totalConnected').textContent=t>=1000?(t/1000).toFixed(2)+' kW':t.toFixed(0)+' W';}
+function loadPreset(n,el){loads=[];nid=1;PRESETS[n].forEach(d=>addLoad(d));document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));if(el)el.classList.add('active');calcDemand();}
+
+// ═══ DEMAND ═══
+function setDF(v,el){document.querySelectorAll('.dc').forEach(c=>c.classList.remove('active'));el.classList.add('active');$('demandFactor').value=v;calcDemand();}
+function calcDemand(){
+  const conn=gTW(),df=parseFloat($('demandFactor').value)||.75,div=parseFloat($('diversityFactor').value)||1,gm=parseFloat($('growthMargin').value)||20,pf=gPF();
+  const demand=conn*df/div,kw=demand/1000,kva=kw/pf,kvar=Math.sqrt(Math.max(0,kva*kva-kw*kw)),des=kva*(1+gm/100);
+  $('d_connected').textContent=conn.toFixed(0);$('d_demand').textContent=demand.toFixed(0);
+  $('d_kw').textContent=kw.toFixed(2);$('d_kva').textContent=kva.toFixed(2);
+  $('d_kvar').textContent=kvar.toFixed(2);$('d_design').textContent=des.toFixed(2);
+  $('demandAlert').innerHTML=!conn?'<div class="alert alert-warn">⚠ No loads entered. Add loads in the Loads tab first.</div>':'<div class="alert alert-success">✅ Demand calculation complete. Use Design kVA for equipment sizing.</div>';
+  const ph={R:0,Y:0,B:0};
+  loads.forEach(l=>{const w=l.qty*l.uw;if(l.phase==='R+Y+B'){ph.R+=w/3;ph.Y+=w/3;ph.B+=w/3;}else if(ph[l.phase]!==undefined)ph[l.phase]+=w;});
+  const tot=Math.max(1,ph.R+ph.Y+ph.B);
+  const cols={R:'#dc2626',Y:'#d97706',B:'#1d4ed8'};
+  $('phaseBar').innerHTML=Object.entries(ph).map(([p,w])=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:3px"><span>Phase ${p}</span><span>${(w/1000).toFixed(2)} kW &nbsp;(${((w/tot)*100).toFixed(1)}%)</span></div><div class="pgb"><div class="pgf" style="width:${(w/tot)*100}%;background:${cols[p]}"></div></div></div>`).join('');
+}
+
+// ═══ CURRENT ═══
+function calcCurrent(){
+  const kw=parseFloat($('curKW').value)||0,pf=parseFloat($('curPF').value)||.8,eff=(parseFloat($('curEff').value)||100)/100,V=gV(),sys=gSys(),P=(kw*1000)/eff;
+  const I=sys==='3ph'?P/(Math.sqrt(3)*V*pf):P/(V*pf),kva=P/pf/1000,kvar=Math.sqrt(Math.max(0,kva*kva-(kw/eff)*(kw/eff)));
+  $('c_line').textContent=I.toFixed(2);$('c_design').textContent=(I*1.25).toFixed(2);$('c_kva').textContent=kva.toFixed(2);$('c_kvar').textContent=kvar.toFixed(2);
+}
+function importFromDemand(){const kva=parseFloat($('d_kva').textContent)||0,pf=gPF();$('curKW').value=(kva*pf).toFixed(2);$('curPF').value=pf;calcCurrent();}
+
+// ═══ CABLES ═══
+function calcCable(){
+  const I=parseFloat($('cabI').value)||0,mat=$('cabMat').value,ins=$('cabIns').value,mth=$('cabMethod').value;
+  const tmp=Math.round((parseInt($('cabTemp').value)||30)/5)*5,grp=Math.min(parseInt($('cabGroup').value)||1,10);
+  const td=(TD[ins]||TD.XLPE)[tmp]||1,gd=GD[grp-1]||.5,derating=td*gd,corrected=I/derating;
+  const tbl=((CD[mat]||CD.copper)[ins]||CD.copper.XLPE)[mth]||CD.copper.XLPE.C;
+  const chosen=tbl.find(c=>c.I>=corrected),res=$('cableResult');
+  if(!I){res.innerHTML='<div class="alert alert-blue">ℹ Enter design current to get a cable recommendation.</div>';buildRefTable(null);return;}
+  if(!chosen){res.innerHTML='<div class="alert alert-warn">⚠ Current exceeds single cable capacity. Use parallel cables or busbar trunking.</div>';buildRefTable(null);return;}
+  const R=(RESIST[mat]||RESIST.copper)[chosen.s]||0;
+  const L=parseFloat($('cabLen').value)||50,sys=gSys(),V=gV();
+  const VD=sys==='3ph'?(Math.sqrt(3)*L*I*R)/1000:(2*L*I*R)/1000,VDp=(VD/V)*100,vdl=parseFloat($('cabVDL').value)||3,pass=VDp<=vdl;
+  res.innerHTML=`
+    <div class="rec-box">
+      <div class="rec-label">Recommended Cable</div>
+      <div class="rec-value">${chosen.s} mm²</div>
+      <div class="rec-sub">${mat.charAt(0).toUpperCase()+mat.slice(1)} ${ins} — Method ${mth} — Rated ${chosen.I}A</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val">${I.toFixed(1)}</div><div class="unit">A</div><div class="lbl">Design I</div></div>
+      <div class="metric"><div class="val">${corrected.toFixed(1)}</div><div class="unit">A</div><div class="lbl">Corrected I</div></div>
+      <div class="metric"><div class="val">${(derating*100).toFixed(0)}</div><div class="unit">%</div><div class="lbl">Derating</div></div>
+      <div class="metric"><div class="val">${(td*100).toFixed(0)}</div><div class="unit">%</div><div class="lbl">Temp Factor</div></div>
+      <div class="metric"><div class="val">${(gd*100).toFixed(0)}</div><div class="unit">%</div><div class="lbl">Group Factor</div></div>
+      <div class="metric hi"><div class="val">${chosen.I}</div><div class="unit">A</div><div class="lbl">Cable Rating</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Voltage Drop (${L}m run)</div>
+    <div class="vd-gauge"><div class="vd-fill" style="width:${Math.min(100,(VDp/vdl)*100)}%;background:${pass?'var(--ca)':'var(--cd)'}"></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <span class="tag ${pass?'tg':'tr'}">${pass?'✓ PASS':'✗ FAIL'} VD ${VDp.toFixed(2)}% (limit ${vdl}%)</span>
+      <span class="tag tb2">${VD.toFixed(2)}V drop over ${L}m</span>
+      <span class="tag ta">${mat.toUpperCase()} ${ins} ${chosen.s}mm² Method ${mth}</span>
+    </div>`;
+  buildRefTable(chosen.s);
+}
+function buildRefTable(sel){
+  const ref=CD.copper.XLPE.C;
+  $('cableRefTable').innerHTML=`<thead><tr><th>mm²</th>${ref.map(c=>`<th class="${c.s===sel?'sel-col':''}">${c.s}</th>`).join('')}</tr></thead><tbody><tr><td style="font-weight:700;color:var(--cp)">A (Cap.)</td>${ref.map(c=>`<td class="${c.s===sel?'sel-col':''}">${c.I}</td>`).join('')}</tr></tbody>`;
+}
+function importDesignCurrent(){const dc=parseFloat($('c_design').textContent)||0;$('cabI').value=dc.toFixed(2);calcCable();}
+
+// ═══ BREAKERS ═══
+function calcBreaker(){
+  const I=parseFloat($('brkI').value)||0,t=$('brkType').value,icu=$('brkIcu').value;
+  const fac=(t==='continuous'||t==='motor')?1.25:1,required=I*fac,rating=BR.find(r=>r>=required)||BR[BR.length-1];
+  const type=rating<=100?'MCB':rating<=630?'MCCB':'ACB',res=$('breakerResult');
+  if(!I){res.innerHTML='<div class="alert alert-blue">ℹ Enter full load current to get a breaker recommendation.</div>';renderChips('breakerChips',BR,null);return;}
+  res.innerHTML=`
+    <div class="rec-box">
+      <div class="rec-label">Recommended Breaker</div>
+      <div class="rec-value">${rating}A ${type}</div>
+      <div class="rec-sub">Breaking capacity: ${icu}kA — ${t==='motor'?'Use DOL or Star-Delta starter for motor protection':'Standard overcurrent protection'}</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val">${I.toFixed(1)}</div><div class="unit">A</div><div class="lbl">FLC</div></div>
+      <div class="metric"><div class="val">${required.toFixed(1)}</div><div class="unit">A</div><div class="lbl">Min Required</div></div>
+      <div class="metric hi"><div class="val">${rating}</div><div class="unit">A</div><div class="lbl">Selected Rating</div></div>
+      <div class="metric"><div class="val">${type}</div><div class="unit">${icu}kA</div><div class="lbl">Type / Icu</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tg">✓ ${rating}A ${type} — Icu ${icu}kA</span>
+      ${fac===1.25?'<span class="tag tb2">125% Rule Applied</span>':''}
+      ${t==='motor'?'<span class="tag ta">Motor: Add DOL/Star-Delta Starter</span>':''}
+    </div>`;
+  renderChips('breakerChips',BR,rating);
+}
+function importCurrentForBreaker(){const v=parseFloat($('c_line').textContent)||0;$('brkI').value=v.toFixed(2);calcBreaker();}
+function renderChips(id,arr,sel){$(id).innerHTML=arr.map(v=>`<span class="chip${v===sel?' sel':''}">${v}A</span>`).join('');}
+
+// ═══ VOLTAGE DROP ═══
+function calcVD(){
+  const I=parseFloat($('vdI').value)||0,L=parseFloat($('vdLen').value)||50,s=parseFloat($('vdSize').value)||50;
+  const mat=$('vdMat').value,sys=$('vdSys').value||gSys(),std=parseFloat($('vdStd').value)||3;
+  const R=(RESIST[mat]||RESIST.copper)[s]||RESIST.copper[50],V=gV();
+  const VD=sys==='3ph'?(Math.sqrt(3)*L*I*R)/1000:(2*L*I*R)/1000,VDp=(VD/V)*100,pass=VDp<=std,res=$('vdResult');
+  if(!I){res.innerHTML='<div class="alert alert-blue">ℹ Enter load current to calculate voltage drop.</div>';return;}
+  const pct=Math.min(100,(VDp/std)*100);
+  res.innerHTML=`
+    <div class="metrics">
+      <div class="metric"><div class="val">${VD.toFixed(2)}</div><div class="unit">V</div><div class="lbl">Voltage Drop</div></div>
+      <div class="metric ${pass?'hi':''}"><div class="val">${VDp.toFixed(2)}</div><div class="unit">%</div><div class="lbl">VD Percentage</div></div>
+      <div class="metric"><div class="val">${(V-VD).toFixed(1)}</div><div class="unit">V</div><div class="lbl">Receiving End</div></div>
+      <div class="metric"><div class="val">${std}</div><div class="unit">%</div><div class="lbl">Limit</div></div>
+      <div class="metric"><div class="val">${((RESIST[mat]||RESIST.copper)[s]||0).toFixed(4)}</div><div class="unit">Ω/km</div><div class="lbl">Resistance</div></div>
+      <div class="metric"><div class="val">${(I*I*(RESIST[mat]||RESIST.copper)[s]*L/1000000).toFixed(2)}</div><div class="unit">kW</div><div class="lbl">I²R Loss</div></div>
+    </div>
+    <div style="margin:10px 0 4px;font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px">VD vs Limit</div>
+    <div class="vd-gauge"><div class="vd-fill" style="width:${pct}%;background:${pass?'var(--ca)':VDp<std*1.2?'var(--cw)':'var(--cd)'}"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--cm);margin-bottom:10px"><span>0%</span><span>Limit: ${std}%</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag ${pass?'tg':'tr'}">${pass?'✓ PASS':'✗ FAIL'} — ${VDp.toFixed(2)}% vs ${std}% limit</span>
+      <span class="tag tb2">${s}mm² ${mat} — ${L}m — ${I}A</span>
+    </div>
+    ${!pass?`<div class="alert alert-warn" style="margin-top:10px">⚠ Voltage drop exceeds limit. Consider: larger cable size, shorter run, or higher voltage system.</div>`:''}`;
+}
+function importForVD(){
+  const I=parseFloat($('cabI').value)||0,L=parseFloat($('cabLen').value)||50;
+  $('vdI').value=I;$('vdLen').value=L;$('vdMat').value=$('cabMat').value;$('vdSys').value=gSys();
+  calcVD();
+}
+
+// ═══ GENERATOR ═══
+function calcGen(){
+  const kw=parseFloat($('genKW').value)||0,pf=parseFloat($('genPF').value)||.8,mm=(parseFloat($('genMM').value)||25)/100,sm=(parseFloat($('genSM').value)||20)/100;
+  const kva=kw/pf,withMotor=kva*(1+mm),design=withMotor*(1+sm),sel=GS.find(s=>s>=design)||GS[GS.length-1],res=$('genResult');
+  if(!kw){res.innerHTML='<div class="alert alert-blue">ℹ Enter demand load or import from the Demand tab.</div>';renderChips('genChips',GS,null);return;}
+  const loading=(design/sel*100).toFixed(1);
+  res.innerHTML=`
+    <div class="rec-box">
+      <div class="rec-label">Recommended Generator Size</div>
+      <div class="rec-value">${sel} kVA</div>
+      <div class="rec-sub">${$('genFuel').value} — ${$('genSupply').value} — ${$('genEnc').value} — Loading: ${loading}%</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val">${kw.toFixed(1)}</div><div class="unit">kW</div><div class="lbl">Demand Load</div></div>
+      <div class="metric"><div class="val">${kva.toFixed(1)}</div><div class="unit">kVA</div><div class="lbl">Base kVA</div></div>
+      <div class="metric"><div class="val">${withMotor.toFixed(1)}</div><div class="unit">kVA</div><div class="lbl">+Motor Start</div></div>
+      <div class="metric"><div class="val">${design.toFixed(1)}</div><div class="unit">kVA</div><div class="lbl">Design kVA</div></div>
+      <div class="metric hi"><div class="val">${sel}</div><div class="unit">kVA</div><div class="lbl">Selected</div></div>
+      <div class="metric"><div class="val">${loading}</div><div class="unit">%</div><div class="lbl">Loading</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="tag tg">✓ ${sel} kVA ${$('genFuel').value} Generator</span>
+      <span class="tag tb2">${loading}% loaded</span>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Standard Genset Sizes (kVA)</div>
+    <div class="size-chips" id="genChips"></div>`;
+  renderChips('genChips',GS,sel);
+}
+function importDemandToGen(){const kva=parseFloat($('d_kva').textContent)||0,pf=gPF();$('genKW').value=(kva*pf).toFixed(2);$('genPF').value=pf;calcGen();}
+
+// ═══ INVERTER ═══
+function calcInv(){
+  const ld=parseFloat($('invLoad').value)||0,hr=parseFloat($('invHrs').value)||4,bv=parseFloat($('invBV').value)||48;
+  const be=(parseFloat($('invBE').value)||85)/100,dd=(parseFloat($('invDD').value)||80)/100,ie=(parseFloat($('invIE').value)||92)/100;
+  const bah=parseFloat($('invBAh').value)||200;
+  const invSize=Math.ceil((ld/ie)/100)*100,energyKwh=(ld*hr)/1000,totalAh=(energyKwh*1000)/(bv*be*dd),numBat=Math.ceil(totalAh/bah);
+  const res=$('invResult');
+  if(!ld){res.innerHTML='<div class="alert alert-blue">ℹ Enter backup load or import from Demand tab.</div>';return;}
+  res.innerHTML=`
+    <div class="rec-box" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div><div class="rec-label">Inverter Size</div><div class="rec-value">${(invSize/1000).toFixed(1)} kVA</div><div class="rec-sub">${$('invType').value}</div></div>
+      <div><div class="rec-label">Battery Bank</div><div class="rec-value">${numBat} × ${bah}Ah</div><div class="rec-sub">${$('invBT').value} @ ${bv}V</div></div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val">${ld.toFixed(0)}</div><div class="unit">W</div><div class="lbl">Backup Load</div></div>
+      <div class="metric"><div class="val">${hr}</div><div class="unit">hrs</div><div class="lbl">Duration</div></div>
+      <div class="metric"><div class="val">${energyKwh.toFixed(2)}</div><div class="unit">kWh</div><div class="lbl">Energy Needed</div></div>
+      <div class="metric"><div class="val">${totalAh.toFixed(0)}</div><div class="unit">Ah</div><div class="lbl">Total Ah</div></div>
+      <div class="metric hi"><div class="val">${numBat}</div><div class="unit">pcs</div><div class="lbl">No. of Batteries</div></div>
+      <div class="metric"><div class="val">${(numBat*bv*bah/1000).toFixed(1)}</div><div class="unit">kWh</div><div class="lbl">Bank Capacity</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="tag tg">✓ ${(invSize/1000).toFixed(1)}kVA Inverter — ${numBat}×${bah}Ah ${bv}V</span>
+    </div>
+    <div class="alert alert-info" style="margin-top:10px">ℹ For LiFePO4 batteries, DoD can be raised to 90%+, reducing battery count. For critical loads, add 20% buffer to inverter size.</div>`;
+}
+function importDemandToInv(){const kva=parseFloat($('d_kva').textContent)||0,pf=gPF();$('invLoad').value=Math.round(kva*pf*1000);calcInv();}
+
+// ═══ TRANSFORMER ═══
+function calcTx(){
+  const kva=parseFloat($('txKVA').value)||0,lf=(parseFloat($('txLF').value)||80)/100,req=kva/lf;
+  const sel=TS.find(s=>s>=req)||TS[TS.length-1],res=$('txResult');
+  if(!kva){res.innerHTML='<div class="alert alert-blue">ℹ Enter load kVA or import from Demand tab.</div>';renderChips('txChips',TS,null);return;}
+  const loading=(kva/sel*100).toFixed(1);
+  const imp=parseFloat($('txImpedance').value)||4,Isc=(sel*1000)/(Math.sqrt(3)*parseFloat($('txSec').value||415))/(imp/100);
+  res.innerHTML=`
+    <div class="rec-box">
+      <div class="rec-label">Recommended Transformer</div>
+      <div class="rec-value">${sel} kVA</div>
+      <div class="rec-sub">${$('txPri').value}V / ${$('txSec').value}V — ${$('txVG').value} — ${$('txCool').value} — ${$('txInst').value}</div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val">${kva.toFixed(1)}</div><div class="unit">kVA</div><div class="lbl">Load kVA</div></div>
+      <div class="metric"><div class="val">${req.toFixed(1)}</div><div class="unit">kVA</div><div class="lbl">Required (@${(lf*100).toFixed(0)}%)</div></div>
+      <div class="metric hi"><div class="val">${sel}</div><div class="unit">kVA</div><div class="lbl">Selected</div></div>
+      <div class="metric"><div class="val">${loading}</div><div class="unit">%</div><div class="lbl">Loading</div></div>
+      <div class="metric"><div class="val">${imp}</div><div class="unit">%</div><div class="lbl">Impedance</div></div>
+      <div class="metric"><div class="val">${(Isc/1000).toFixed(1)}</div><div class="unit">kA</div><div class="lbl">Fault Level</div></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="tag tg">✓ ${sel} kVA — ${$('txVG').value} — ${$('txCool').value}</span>
+      <span class="tag tb2">${loading}% loaded</span>
+      <span class="tag ta">Fault Level: ${(Isc/1000).toFixed(1)} kA</span>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--cp);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Standard Transformer Sizes (kVA)</div>
+    <div class="size-chips" id="txChips"></div>`;
+  renderChips('txChips',TS,sel);
+}
+function importDemandToTx(){const des=parseFloat($('d_design').textContent)||0;$('txKVA').value=des.toFixed(1);calcTx();}
+
+// ═══ REPORT ═══
+function genReport(){
+  const V=gV(),conn=gTW(),df=parseFloat($('demandFactor').value)||.75,div=parseFloat($('diversityFactor').value)||1,gm=parseFloat($('growthMargin').value)||20,pf=gPF();
+  const demand=conn*df/div,kw=demand/1000,kva=kw/pf,des=kva*(1+gm/100);
+  const cLine=parseFloat($('c_line').textContent)||0,cDes=parseFloat($('c_design').textContent)||0;
+  const cabTag=document.querySelector('#cableResult .tag.ta'),brkTag=document.querySelector('#breakerResult .tag.tg');
+  const vdTag=document.querySelector('#vdResult .tag');
+  const genVal=document.querySelector('#genResult .rec-value'),txVal=document.querySelector('#txResult .rec-value'),invVal=document.querySelector('#invResult .rec-value');
+
+  $('reportOutput').innerHTML=`
+    <div class="card" style="page-break-inside:avoid">
+      <div class="rpt-hdr">
+        <div><h2>⚡ ${$('pName').value||'Electrical Load Calculation Report'}</h2>
+          <p>${$('pLocation').value||''}${$('pLocation').value?' — ':''}${$('pType').value||''} &nbsp;|&nbsp; ${$('pCode').value} &nbsp;|&nbsp; Standard Edition</p></div>
+        <div style="font-size:28px;opacity:.6">📋</div>
+      </div>
+      <table><tr><td style="color:var(--cm);width:160px;font-weight:600">Client</td><td><strong>${$('pClient').value||'—'}</strong></td><td style="color:var(--cm);width:150px;font-weight:600">Engineer</td><td><strong>${$('pEngineer').value||'—'}</strong></td></tr>
+      <tr><td style="color:var(--cm);font-weight:600">System</td><td>${gSys()==='3ph'?'Three Phase':'Single Phase'} | ${V}V | ${$('sFreq').value}Hz</td><td style="color:var(--cm);font-weight:600">Earthing</td><td>${$('sEarth').value}</td></tr>
+      <tr><td style="color:var(--cm);font-weight:600">Drawing / Rev</td><td>${$('pRev').value||'—'}</td><td style="color:var(--cm);font-weight:600">Date</td><td>${$('pDate').value||new Date().toLocaleDateString()}</td></tr></table>
+    </div>
+
+    <div class="card" style="page-break-inside:avoid">
+      <div class="card-title">📊 Load Summary</div>
+      <div class="metrics">
+        <div class="metric"><div class="val">${(conn/1000).toFixed(2)}</div><div class="unit">kW</div><div class="lbl">Connected</div></div>
+        <div class="metric"><div class="val">${kw.toFixed(2)}</div><div class="unit">kW</div><div class="lbl">Demand</div></div>
+        <div class="metric hi"><div class="val">${kva.toFixed(2)}</div><div class="unit">kVA</div><div class="lbl">Apparent</div></div>
+        <div class="metric"><div class="val">${des.toFixed(2)}</div><div class="unit">kVA</div><div class="lbl">Design</div></div>
+        <div class="metric"><div class="val">${pf}</div><div class="unit">PF</div><div class="lbl">Power Factor</div></div>
+        <div class="metric"><div class="val">${loads.length}</div><div class="unit">items</div><div class="lbl">Load Items</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="page-break-inside:avoid">
+      <div class="card-title">📝 Load Schedule</div>
+      <div style="overflow-x:auto">
+        ${loads.length?`<table><thead><tr><th>#</th><th>Description</th><th>Category</th><th>Qty</th><th>Unit W</th><th>Total W</th><th>PF</th><th>D.F</th><th>Phase</th></tr></thead><tbody>
+          ${loads.map((l,i)=>`<tr><td>${i+1}</td><td>${l.desc||'—'}</td><td>${l.cat}</td><td>${l.qty}</td><td>${l.uw}</td><td><strong>${(l.qty*l.uw).toFixed(0)}</strong></td><td>${l.pf}</td><td>${l.df}</td><td>${l.phase}</td></tr>`).join('')}
+          <tr style="background:#f0fdf4"><td colspan="5"><strong>TOTAL CONNECTED LOAD</strong></td><td colspan="4"><strong>${conn.toFixed(0)} W = ${(conn/1000).toFixed(2)} kW</strong></td></tr>
+        </tbody></table>`:'<div class="alert alert-warn">No loads entered.</div>'}
+      </div>
+    </div>
+
+    <div class="card" style="page-break-inside:avoid">
+      <div class="card-title">✅ Engineering Recommendations Summary</div>
+      <table>
+        <tr><td style="font-weight:600;color:var(--cm);width:220px">Line Current</td><td>${cLine.toFixed(2)} A</td><td style="font-weight:600;color:var(--cm);width:200px">Design Current (×1.25)</td><td><strong>${cDes.toFixed(2)} A</strong></td></tr>
+        <tr><td style="font-weight:600;color:var(--cm)">Cable Size</td><td>${cabTag?`<span class="tag ta">${cabTag.textContent}</span>`:'Run Cable module'}</td><td style="font-weight:600;color:var(--cm)">Circuit Breaker</td><td>${brkTag?`<span class="tag tg">${brkTag.textContent}</span>`:'Run Breaker module'}</td></tr>
+        <tr><td style="font-weight:600;color:var(--cm)">Voltage Drop</td><td>${vdTag?`<span class="tag ${vdTag.className.includes('tg')?'tg':'tr'}">${vdTag.textContent}</span>`:'Run Volt Drop module'}</td><td style="font-weight:600;color:var(--cm)">Generator</td><td>${genVal?`<span class="tag tg">✓ ${genVal.textContent}</span>`:'Run Generator module'}</td></tr>
+        <tr><td style="font-weight:600;color:var(--cm)">Inverter & Battery</td><td>${invVal?`<span class="tag tg">✓ ${invVal.textContent}</span>`:'Run Inverter module'}</td><td style="font-weight:600;color:var(--cm)">Transformer</td><td>${txVal?`<span class="tag tg">✓ ${txVal.textContent}</span>`:'Run Transformer module'}</td></tr>
+        <tr><td style="font-weight:600;color:var(--cm)">Demand Factor</td><td>${df} (DF) / ${div} (DivF)</td><td style="font-weight:600;color:var(--cm)">Growth Margin</td><td>${gm}%</td></tr>
+        <tr><td style="font-weight:600;color:var(--cm)">Supply System</td><td>${gSys()==='3ph'?'Three Phase':'Single Phase'} ${V}V ${$('sFreq').value}Hz</td><td style="font-weight:600;color:var(--cm)">Standard Applied</td><td>${$('pCode').value}</td></tr>
+      </table>
+    </div>
+
+    <div class="alert alert-info" style="margin-top:4px;font-size:11px">
+      🖨 Use <strong>Print / Save PDF</strong> above. For official submissions, this report must be stamped by a registered engineer. All figures are engineering estimates — verify against site conditions and applicable local standards. Generated by Electrical Load Calculator — Standard Edition.
+    </div>`;
+}
+
+// ═══ INIT ═══
+$('pDate').value=new Date().toISOString().split('T')[0];
+loadPreset('office',null);
+calcDemand();
+buildRefTable(null);
+renderChips('breakerChips',BR,null);
+</script>
+</body>
+</html>

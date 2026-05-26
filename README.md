@@ -1,0 +1,1 @@
+# electrical-load-calculator-standard

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electrical Load Calculator — Standard Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0c1117;--panel:#111820;--border:#1e2d3d;--accent:#16a34a;--accent2:#14532d;--text:#e8edf3;--muted:#64748b;--input-bg:#0c1117;--error:#ef4444;--success:#22c55e}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(22,163,74,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(22,163,74,0.04) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+    .orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;animation:drift 12s ease-in-out infinite alternate}
+    .orb1{width:400px;height:400px;background:rgba(20,83,45,0.45);top:-100px;right:-100px}
+    .orb2{width:300px;height:300px;background:rgba(22,163,74,0.12);bottom:-80px;left:-80px;animation-delay:-6s}
+    @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(20px,30px) scale(1.05)}}
+    .card{position:relative;z-index:1;width:100%;max-width:440px;margin:20px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:40px;box-shadow:0 0 60px rgba(0,0,0,0.5),0 0 0 1px rgba(22,163,74,0.05);animation:slideUp .5s cubic-bezier(0.16,1,0.3,1)}
+    @keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+    .logo-row{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+    .logo-icon{width:44px;height:44px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+    .logo-text h1{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.2px;line-height:1.2}
+    .logo-text p{font-size:11px;color:var(--muted);margin-top:2px}
+    .edition-badge{display:inline-block;background:rgba(22,163,74,0.15);border:1px solid rgba(22,163,74,0.3);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.5px;margin-top:4px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:28px}
+    .tab-btn{padding:8px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+    .tab-btn.active{background:var(--accent2);color:var(--text)}
+    .form-section{display:none}.form-section.active{display:block}
+    .form-title{font-family:'Space Mono',monospace;font-size:20px;font-weight:700;margin-bottom:6px}
+    .form-subtitle{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.5}
+    .field{margin-bottom:16px}
+    .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+    .field input{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;transition:all .2s}
+    .field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(22,163,74,0.1)}
+    .field input::placeholder{color:#374151}
+    .btn-primary{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-family:'Space Mono',monospace;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px}
+    .btn-primary:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 4px 20px rgba(22,163,74,0.3)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .link-btn{background:none;border:none;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+    .link-btn:hover{color:#15803d}
+    .forgot-row{text-align:right;margin-top:-8px;margin-bottom:16px}
+    .msg{padding:11px 14px;border-radius:8px;font-size:12px;font-weight:500;margin-bottom:16px;display:none;line-height:1.5}
+    .msg.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;display:flex;align-items:flex-start;gap:8px}
+    .msg.success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac;display:flex;align-items:flex-start;gap:8px}
+    .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .footer-note{text-align:center;margin-top:24px;font-size:11px;color:var(--muted)}
+    .back-btn{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer;margin-bottom:20px;transition:all .2s}
+    .back-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .pw-wrap{position:relative}
+    .pw-wrap input{padding-right:40px}
+    .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0;line-height:1}
+    .feature-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:24px}
+    .feat{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+    .feat-icon{color:var(--accent);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="card">
+    <div class="logo-row">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1>ELECTRICAL LOAD<br>CALCULATOR</h1>
+        <p>Professional IEC-Grade Tool</p>
+        <span class="edition-badge">STANDARD EDITION</span>
+      </div>
+    </div>
+    <div class="feature-list">
+      <div class="feat"><span class="feat-icon">✓</span>Load & Demand Analysis</div>
+      <div class="feat"><span class="feat-icon">✓</span>Current Calculation</div>
+      <div class="feat"><span class="feat-icon">✓</span>Advanced Cable Sizing</div>
+      <div class="feat"><span class="feat-icon">✓</span>Breaker Selection</div>
+      <div class="feat"><span class="feat-icon">✓</span>Voltage Drop Analysis</div>
+      <div class="feat"><span class="feat-icon">✓</span>Generator Sizing</div>
+      <div class="feat"><span class="feat-icon">✓</span>Inverter & Battery Sizing</div>
+      <div class="feat"><span class="feat-icon">✓</span>Transformer Sizing</div>
+    </div>
+    <div class="tabs" id="authTabs">
+      <button class="tab-btn active" onclick="showTab('login')">Sign In</button>
+      <button class="tab-btn" onclick="showTab('signup')">Create Account</button>
+    </div>
+    <div class="form-section active" id="loginSection">
+      <h2 class="form-title">Welcome back</h2>
+      <p class="form-subtitle">Sign in to access your Standard Edition calculator.</p>
+      <div class="msg" id="loginMsg"></div>
+      <div class="field"><label>Email Address</label><input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email"></div>
+      <div class="field"><label>Password</label><div class="pw-wrap"><input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="pw-toggle" onclick="togglePw('loginPassword',this)">👁</button></div></div>
+      <div class="forgot-row"><button class="link-btn" onclick="showTab('reset')">Forgot password?</button></div>
+      <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
+      <div class="footer-note">No account? <button class="link-btn" onclick="showTab('signup')">Create one free</button></div>
+    </div>
+    <div class="form-section" id="signupSection">
+      <h2 class="form-title">Create account</h2>
+      <p class="form-subtitle">Get full access to the Standard Edition.</p>
+      <div class="msg" id="signupMsg"></div>
+      <div class="field"><label>Full Name</label><input type="text" id="signupName" placeholder="Engr. John Adeyemi"></div>
+      <div class="field"><label>Email Address</label><input type="email" id="signupEmail" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><div class="pw-wrap"><input type="password" id="signupPassword" placeholder="Min. 8 characters" onkeydown="if(event.key==='Enter')doSignup()"><button class="pw-toggle" onclick="togglePw('signupPassword',this)">👁</button></div></div>
+      <button class="btn-primary" id="signupBtn" onclick="doSignup()">Create Account</button>
+      <div class="footer-note">Already have an account? <button class="link-btn" onclick="showTab('login')">Sign in</button></div>
+    </div>
+    <div class="form-section" id="resetSection">
+      <button class="back-btn" onclick="showTab('login')">← Back to sign in</button>
+      <h2 class="form-title">Reset password</h2>
+      <p class="form-subtitle">We'll send a reset link to your email.</p>
+      <div class="msg" id="resetMsg"></div>
+      <div class="field"><label>Email Address</label><input type="email" id="resetEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doReset()"></div>
+      <button class="btn-primary" id="resetBtn" onclick="doReset()">Send Reset Link</button>
+    </div>
+  </div>
+  <script>
+    const SUPABASE_URL='https://uxpgdaetneoaaevgjoai.supabase.co';
+    const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
+    const{createClient}=supabase;const sb=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    sb.auth.getSession().then(({data})=>{if(data.session)window.location.href='/dashboard/';});
+    function showTab(tab){document.querySelectorAll('.form-section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));const tabs=document.getElementById('authTabs');if(tab==='reset'){document.getElementById('resetSection').classList.add('active');tabs.style.display='none';}else{tabs.style.display='grid';document.getElementById(tab+'Section').classList.add('active');document.querySelectorAll('.tab-btn')[tab==='login'?0:1].classList.add('active');}clearMsgs();}
+    function clearMsgs(){document.querySelectorAll('.msg').forEach(m=>{m.style.display='none';m.textContent='';})}
+    function showMsg(id,type,text){const el=document.getElementById(id);el.className='msg '+type;el.innerHTML=(type==='error'?'⚠ ':'✓ ')+text;el.style.display='flex';}
+    function setLoading(btnId,loading,txt){const b=document.getElementById(btnId);b.disabled=loading;b.innerHTML=loading?`<span class="spinner"></span>Please wait…`:txt;}
+    function togglePw(id,btn){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';btn.textContent=i.type==='password'?'👁':'🙈';}
+    async function doLogin(){const email=document.getElementById('loginEmail').value.trim(),password=document.getElementById('loginPassword').value;if(!email||!password)return showMsg('loginMsg','error','Please fill in all fields.');setLoading('loginBtn',true,'Sign In');const{error}=await sb.auth.signInWithPassword({email,password});setLoading('loginBtn',false,'Sign In');if(error)return showMsg('loginMsg','error',error.message);window.location.href='/dashboard/';}
+    async function doSignup(){const name=document.getElementById('signupName').value.trim(),email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value;if(!name||!email||!password)return showMsg('signupMsg','error','Please fill in all fields.');if(password.length<8)return showMsg('signupMsg','error','Password must be at least 8 characters.');setLoading('signupBtn',true,'Create Account');const{error}=await sb.auth.signUp({email,password,options:{data:{full_name:name}}});setLoading('signupBtn',false,'Create Account');if(error)return showMsg('signupMsg','error',error.message);showMsg('signupMsg','success','Account created! Check your email to confirm, then sign in.');}
+    async function doReset(){const email=document.getElementById('resetEmail').value.trim();if(!email)return showMsg('resetMsg','error','Please enter your email address.');setLoading('resetBtn',true,'Send Reset Link');const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/dashboard/'});setLoading('resetBtn',false,'Send Reset Link');if(error)return showMsg('resetMsg','error',error.message);showMsg('resetMsg','success','Reset link sent! Check your inbox.');}
+  </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<div class="app">
+<div class="hdr">
+  <div class="hdr-logo">⚡</div>
+  <div>
+    <h1>ElectraSuite</h1>
+    <p>14-Module IEC-Grade Tool — Electrical design, analysis & reporting</p>
+    <div class="plan-banner" id="planBanner"></div>
+  </div>
+</div>
+
+<div class="tabs-wrap">
+<div class="tabs" id="tabsBar">
+  <div class="tab active" data-tab="0" onclick="gotoTab(0)">📋 Project ID</div>
+  <div class="tab" data-tab="1" onclick="gotoTab(1)">📝 Loads</div>
+  <div class="tab" data-tab="2" onclick="gotoTab(2)">📊 Demand</div>
+  <div class="tab" data-tab="3" onclick="gotoTab(3)">⚡ Current</div>
+  <div class="tab" data-tab="4" onclick="gotoTab(4)">〰 Cable Selection</div>
+  <div class="tab" data-tab="5" onclick="gotoTab(5)">📉 Volt Drop</div>
+  <div class="tab" data-tab="6" onclick="gotoTab(6)">🔌 Breaker</div>
+  <div class="tab" data-tab="7" onclick="gotoTab(7)">🔋 Generator</div>
+  <div class="tab" data-tab="8" onclick="gotoTab(8)">🔆 Inverter</div>
+  <div class="tab" data-tab="9" onclick="gotoTab(9)">🔄 Transformer</div>
+  <div class="tab" data-tab="10" onclick="gotoTab(10)">📦 BOM</div>
+  <div class="tab" data-tab="11" onclick="gotoTab(11)">⚖ Phase Bal.</div>
+  <div class="tab" data-tab="12" onclick="gotoTab(12)">🌍 Carbon Footprint</div>
+  <div class="tab" data-tab="13" onclick="gotoTab(13)">💰 Utility Cost</div>
+  <div class="tab" data-tab="14" onclick="gotoTab(14)">📄 Report</div>
+</div>
+<div class="tabs-scroll-hint tabs-scroll-hint-left" id="tabsScrollHintLeft">scroll ‹‹</div>
+<div class="tabs-scroll-hint tabs-scroll-hint-right" id="tabsScrollHintRight">›› scroll</div>
+</div>
+
+<!-- P0 PROJECT -->
+<div class="panel active" id="p0">
+  <div class="sec"><div class="st">📋 Project Details</div>
+    <div class="g2">
+      <div class="fld"><label>Project Name</label><input id="pn" value="Riverside Office Complex"></div>
+      <div class="fld"><label>Client / Owner</label><input id="pc" value="Apex Properties Ltd"></div>
+      <div class="fld"><label>Location</label><input id="pl" value="Lagos, Nigeria"></div>
+      <div class="fld"><label>Author</label><input id="pe" placeholder="Your name"></div>
+      <div class="fld"><label>Date</label><input type="date" id="pd"></div>
+      <div class="fld"><label>Project Type</label><select id="pt"><option>Commercial</option><option>Residential</option><option>Industrial (Light)</option><option>Hotel</option><option>Hospital</option><option>School</option><option>Warehouse</option><option>Mall</option></select></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">⚙ System Configuration</div>
+    <div class="g3">
+      <div class="fld"><label>System Type</label><select id="stype" onchange="uCC()"><option value="3ph">Three Phase</option><option value="1ph">Single Phase</option></select></div>
+      <div class="fld"><label>Supply Voltage</label><select id="svolt" onchange="uCC()"><option value="415">415V (3Φ)</option><option value="400">400V (3Φ)</option><option value="230">230V (1Φ)</option><option value="240">240V (1Φ)</option><option value="120">120V (1Φ)</option><option value="custom">Custom</option></select></div>
+      <div class="fld"><label>Custom Voltage (V)</label><input type="number" id="scvolt" value="415" oninput="uCC()"></div>
+      <div class="fld"><label>Frequency</label><select id="sfreq"><option value="50">50 Hz</option><option value="60">60 Hz</option></select></div>
+      <div class="fld"><label>Default Power Factor</label><input type="number" id="spf" value="0.8" min="0.5" max="1" step="0.01"></div>
+      <div class="fld"><label>Earthing System</label><select id="searth"><option>TN-S</option><option>TN-C-S</option><option>TT</option><option>IT</option></select></div>
+    </div>
+    <div class="al ai" style="margin-top:10px">ℹ All modules use these settings as defaults.</div>
+  </div>
+  <div class="nvr"><div></div><button class="nb" onclick="gotoTab(1)">Next: Loads →</button></div>
+</div>
+
+<!-- P1 LOADS -->
+<div class="panel" id="p1">
+  <div class="sec"><div class="st">📋 Quick Presets</div>
+    <div class="pbs">
+      <button class="pb" onclick="LP('house',this)">🏠 Residential</button>
+      <button class="pb" onclick="LP('office',this)">🏢 Office Floor</button>
+      <button class="pb" onclick="LP('school',this)">🏫 School Block</button>
+      <button class="pb" onclick="LP('hotel',this)">🏨 Hotel Block</button>
+      <button class="pb" onclick="LP('warehouse',this)">🏭 Warehouse</button>
+    </div>
+  </div>
+  <div class="sec"><div class="st">📝 Load Schedule</div>
+    <div class="lr lrh"><span>Description</span><span>Category</span><span>Qty</span><span>Watts</span><span>Total</span><span>PWR Factor</span><span>Demand</span><span>Phase</span><span></span></div>
+    <div id="loadRows"></div>
+    <div style="margin-top:8px;display:flex;gap:7px">
+      <button class="btn bp bsm" onclick="AL()">+ Add Load</button>
+      <button class="btn bsm" style="border:1px solid var(--cbr)" onclick="CL()">🗑 Clear All</button>
+    </div>
+    <div class="tb2"><span>Total Connected Load</span><span class="big" id="totConn">0 W</span></div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(0)">← Back</button><button class="nb" onclick="gotoTab(2)">Next: Demand →</button></div>
+</div>
+
+<!-- P2 DEMAND -->
+<div class="panel" id="p2">
+  <div class="sec"><div class="st">📊 Demand Factor Presets</div>
+    <div class="pbs" id="dPresets">
+      <button class="pb" onclick="sDP(0.70,this)">Residential</button>
+      <button class="pb active" onclick="sDP(0.75,this)">Office</button>
+      <button class="pb" onclick="sDP(0.65,this)">Hotel</button>
+      <button class="pb" onclick="sDP(0.80,this)">Hospital</button>
+      <button class="pb" onclick="sDP(0.60,this)">School</button>
+      <button class="pb" onclick="sDP(0.50,this)">Warehouse</button>
+      <button class="pb" onclick="sDP(0.85,this)">Mall/Retail</button>
+    </div>
+    <div class="g3">
+      <div class="fld"><label>Demand Factor</label><input type="number" id="df" value="0.75" min="0.1" max="1" step="0.01" oninput="cD()"></div>
+      <div class="fld"><label>Diversity Factor</label><input type="number" id="divf" value="1.0" min="0.5" max="2" step="0.01" oninput="cD()"></div>
+      <div class="fld"><label>Growth Margin (%)</label><input type="number" id="gm" value="20" min="0" max="100" oninput="cD()"></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">📈 Results</div>
+    <div class="fb">Demand Load = Connected Load × Demand Factor ÷ Diversity Factor</div>
+    <div class="mgs">
+      <div class="mg"><div class="v" id="d_c">0</div><div class="u">W</div><div class="l">Connected</div></div>
+      <div class="mg"><div class="v" id="d_d">0</div><div class="u">W</div><div class="l">Demand</div></div>
+      <div class="mg"><div class="v" id="d_kw">0</div><div class="u">kW</div><div class="l">Demand kW</div></div>
+      <div class="mg"><div class="v" id="d_kva">0</div><div class="u">kVA</div><div class="l">Apparent kVA</div></div>
+      <div class="mg"><div class="v" id="d_kvar">0</div><div class="u">kVAR</div><div class="l">Reactive</div></div>
+      <div class="mg"><div class="v" id="d_des">0</div><div class="u">kVA</div><div class="l">Design +Margin</div></div>
+    </div>
+    <div id="dAlert"></div>
+    <div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:var(--cm);text-transform:uppercase;margin-bottom:5px">Load by Phase</div><div id="pBar"></div></div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(1)">← Back</button><button class="nb" onclick="gotoTab(3)">Next: Current →</button></div>
+</div>
+
+<!-- P3 CURRENT -->
+<div class="panel" id="p3">
+  <div class="sec"><div class="st">⚡ Current Calculation</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="impDem2Cur()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Power (kW)</label><input type="number" id="ckw" value="0" step="0.1" oninput="cCur()"></div>
+      <div class="fld"><label>Power Factor</label><input type="number" id="cpf" value="0.8" step="0.01" min="0.1" max="1" oninput="cCur()"></div>
+      <div class="fld"><label>Efficiency (%)</label><input type="number" id="ceff" value="100" step="1" oninput="cCur()"></div>
+    </div>
+    <div class="fb" id="cFormula">3Φ: I = P ÷ (√3 × V × PF)</div>
+  </div>
+  <div class="sec"><div class="st">📋 Results</div>
+    <div class="mgs">
+      <div class="mg"><div class="v" id="c_line">0</div><div class="u">A</div><div class="l">Line Current</div></div>
+      <div class="mg"><div class="v" id="c_phase">0</div><div class="u">A</div><div class="l">Phase Current</div></div>
+      <div class="mg"><div class="v" id="c_kva">0</div><div class="u">kVA</div><div class="l">Apparent Power</div></div>
+      <div class="mg"><div class="v" id="c_des">0</div><div class="u">A</div><div class="l">Design ×1.25</div></div>
+    </div>
+    <div class="al ai">ℹ 125% rule applied. Use Design Current for cable and breaker sizing.</div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(2)">← Back</button><button class="nb" onclick="gotoTab(4)">Next: Cable →</button></div>
+</div>
+
+<!-- P4 CABLES -->
+<div class="panel" id="p4">
+  <div class="sec"><div class="st">〰 Cable Parameters</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2Cab()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Design Current (A)</label><input type="number" id="cab_I" value="0" step="0.1" oninput="cCab()"></div>
+      <div class="fld"><label>Cable Material</label><select id="cab_mat" onchange="cCab()"><option value="copper">Copper</option><option value="aluminium">Aluminium</option></select></div>
+      <div class="fld"><label>Insulation</label><select id="cab_ins" onchange="cCab()"><option value="XLPE">XLPE</option><option value="PVC">PVC</option></select></div>
+      <div class="fld"><label>No. of Cores</label><select id="cab_cor" onchange="cCab()"><option value="2">2-Core</option><option value="3">3-Core</option><option value="4">4-Core (3P+N)</option><option value="5">5-Core (3P+N+E)</option></select></div>
+      <div class="fld"><label>Install Method</label><select id="cab_mth" onchange="cCab()"><option value="A1">A1 - Conduit in wall</option><option value="B1">B1 - Conduit on wall</option><option value="C">C - Clipped direct</option><option value="D1">D1 - In duct/ground</option><option value="E">E - Cable tray</option><option value="F">F - Free air</option></select></div>
+      <div class="fld"><label>Ambient Temp (°C)</label><input type="number" id="cab_tmp" value="30" min="10" max="70" oninput="cCab()"></div>
+      <div class="fld"><label>Circuits Grouped</label><input type="number" id="cab_grp" value="1" min="1" max="10" oninput="cCab()"></div>
+      <div class="fld"><label>Run Length (m)</label><input type="number" id="cab_len" value="50" oninput="cCab()"></div>
+      <div class="fld"><label>Volt Drop Limit (%)</label><select id="cab_vdl" onchange="cCab()"><option value="3">3% IEC Preferred</option><option value="5">5% Acceptable</option></select></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">📋 Cable Result</div><div id="cabRes"></div><div class="dv"></div><div style="font-size:11px;font-weight:700;color:var(--cm);margin-bottom:7px;text-transform:uppercase">IEC Ref — Cu XLPE Method C 30°C</div><div style="overflow-x:auto"><table id="cabRefTbl"></table></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(3)">← Back</button><button class="nb" onclick="gotoTab(5)">Next: Volt Drop →</button></div>
+</div>
+
+<!-- P5 VD -->
+<div class="panel" id="p5">
+  <div class="sec"><div class="st">📉 Voltage Drop Inputs</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2VD()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Load Current (A)</label><input type="number" id="vd_I" value="0" step="0.1" oninput="cVD()"></div>
+      <div class="fld"><label>Cable Run Length (m)</label><input type="number" id="vd_len" value="50" oninput="cVD()"></div>
+      <div class="fld"><label>Cable Size (mm²)</label><select id="vd_sz" onchange="cVD()"><option value="1.5">1.5</option><option value="2.5">2.5</option><option value="4">4</option><option value="6">6</option><option value="10">10</option><option value="16">16</option><option value="25">25</option><option value="35">35</option><option value="50" selected>50</option><option value="70">70</option><option value="95">95</option><option value="120">120</option><option value="150">150</option><option value="185">185</option><option value="240">240</option><option value="300">300</option></select></div>
+      <div class="fld"><label>Material</label><select id="vd_mat" onchange="cVD()"><option value="copper">Copper</option><option value="aluminium">Aluminium</option></select></div>
+      <div class="fld"><label>System</label><select id="vd_sys" onchange="cVD()"><option value="3ph">Three Phase</option><option value="1ph">Single Phase</option></select></div>
+      <div class="fld"><label>Volt Drop Standard</label><select id="vd_std" onchange="cVD()"><option value="3">IEC 3%</option><option value="5">IEC 5%</option><option value="2.5">NEC 2.5%</option></select></div>
+    </div>
+    <div class="fb">1Φ: VD = (2×L×I×R)÷1000   |   3Φ: VD = (√3×L×I×R)÷1000</div>
+  </div>
+  <div class="sec"><div class="st">📋 Results</div><div id="vdRes"></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(4)">← Back</button><button class="nb" onclick="gotoTab(6)">Next: Breakers →</button></div>
+</div>
+
+<!-- P6 BREAKERS -->
+<div class="panel" id="p6">
+  <div class="sec"><div class="st">🔌 Breaker Selection</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2Brk()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Full Load Current (A)</label><input type="number" id="brk_I" value="0" step="0.1" oninput="cBrk()"></div>
+      <div class="fld"><label>Load Type</label><select id="brk_lt" onchange="cBrk()"><option value="general">General/Resistive</option><option value="motor">Motor Load</option><option value="continuous">Continuous</option><option value="lighting">Lighting</option></select></div>
+      <div class="fld"><label>Breaking Capacity</label><select id="brk_ic" onchange="cBrk()"><option value="6">6 kA</option><option value="10">10 kA</option><option value="25">25 kA</option><option value="36">36 kA</option><option value="50">50 kA</option></select></div>
+    </div>
+    <div class="fb">Rating ≥ 1.25 × FLC (continuous/motor) | Next standard rating above FLC</div>
+  </div>
+  <div class="sec"><div class="st">✅ Recommended Breaker</div><div id="brkRes"></div><div class="dv"></div><div style="font-size:11px;font-weight:700;color:var(--cm);margin-bottom:7px;text-transform:uppercase">Standard Ratings (A)</div><div style="display:flex;flex-wrap:wrap;gap:5px" id="brkTbl"></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(5)">← Back</button><button class="nb" onclick="gotoTab(7)">Next: Generator →</button></div>
+</div>
+
+<!-- P7 GENERATOR -->
+<div class="panel" id="p7">
+  <div class="sec"><div class="st">🔋 Generator Sizing</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2Gen()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Demand Load (kW)</label><input type="number" id="gen_kw" value="0" step="0.1" oninput="cGen()"></div>
+      <div class="fld"><label>Power Factor</label><input type="number" id="gen_pf" value="0.8" step="0.01" oninput="cGen()"></div>
+      <div class="fld"><label>Motor Start Margin (%)</label><input type="number" id="gen_mm" value="25" oninput="cGen()"></div>
+      <div class="fld"><label>Spare Margin (%)</label><input type="number" id="gen_sm" value="20" oninput="cGen()"></div>
+      <div class="fld"><label>Load Type</label><select id="gen_lt"><option>Mixed</option><option>Mostly Resistive</option><option>Heavy Motor</option><option>IT/Data Centre</option></select></div>
+      <div class="fld"><label>Fuel Type</label><select id="gen_ft"><option>Diesel</option><option>Gas (LPG)</option><option>Dual Fuel</option></select></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">✅ Recommendation</div><div id="genRes"></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(6)">← Back</button><button class="nb" onclick="gotoTab(8)">Next: Inverter →</button></div>
+</div>
+
+<!-- P8 INVERTER -->
+<div class="panel" id="p8">
+  <div class="sec"><div class="st">🔆 Inverter &amp; Battery Sizing</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2Inv()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Load to BackUp (W)</label><input type="number" id="inv_ld" value="0" step="50" oninput="cInv()"></div>
+      <div class="fld"><label>Backup Duration (hrs)</label><input type="number" id="inv_hr" value="4" step="0.5" oninput="cInv()"></div>
+      <div class="fld"><label>Battery Voltage (V)</label><select id="inv_bv" onchange="cInv()"><option value="12">12V</option><option value="24">24V</option><option value="48" selected>48V</option></select></div>
+      <div class="fld"><label>Battery Efficiency (%)</label><input type="number" id="inv_be" value="85" oninput="cInv()"></div>
+      <div class="fld"><label>Depth of Discharge (%)</label><input type="number" id="inv_dd" value="80" oninput="cInv()"></div>
+      <div class="fld"><label>Inverter Efficiency (%)</label><input type="number" id="inv_ie" value="92" oninput="cInv()"></div>
+      <div class="fld"><label>Battery Ah Rating</label><select id="inv_bah" onchange="cInv()"><option value="100">100Ah</option><option value="150">150Ah</option><option value="200" selected>200Ah</option><option value="250">250Ah</option></select></div>
+      <div class="fld"><label>Battery Type</label><select id="inv_bt"><option>Lead Acid (FLA)</option><option>AGM</option><option>Gel</option><option>LiFePO4</option></select></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">✅ Results</div><div id="invRes"></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(7)">← Back</button><button class="nb" onclick="gotoTab(9)">Next: Transformer →</button></div>
+</div>
+
+<!-- P9 TRANSFORMER -->
+<div class="panel" id="p9">
+  <div class="sec"><div class="st">🔄 Transformer Sizing</div>
+    <button class="btn ba bsm" style="margin-bottom:10px" onclick="iD2Tx()">⬇ Import from Demand</button>
+    <div class="g3">
+      <div class="fld"><label>Load kVA</label><input type="number" id="tx_kva" value="0" step="1" oninput="cTx()"></div>
+      <div class="fld"><label>Power Factor</label><input type="number" id="tx_pf" value="0.8" step="0.01" oninput="cTx()"></div>
+      <div class="fld"><label>Loading Factor (%)</label><input type="number" id="tx_lf" value="80" min="50" max="100" oninput="cTx()"></div>
+      <div class="fld"><label>Primary Voltage</label><select id="tx_pri" onchange="cTx()"><option value="11000">11kV</option><option value="33000">33kV</option><option value="415">415V</option><option value="400">400V</option></select></div>
+      <div class="fld"><label>Secondary Voltage</label><select id="tx_sec" onchange="cTx()"><option value="415">415V</option><option value="400">400V</option><option value="230">230V</option><option value="240">240V</option></select></div>
+      <div class="fld"><label>Cooling Type</label><select id="tx_cool"><option>ONAN</option><option>ONAF</option><option>Dry Type (AN)</option><option>Cast Resin</option></select></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">✅ Recommendation</div><div id="txRes"></div></div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(8)">← Back</button><button class="nb" onclick="gotoTab(10)">Next: BOM →</button></div>
+</div>
+
+<!-- P10 BOM -->
+<div class="panel" id="p10">
+  <div class="sec"><div class="st">📦 Bill of Materials</div>
+    <div class="al ai">ℹ Auto-generated from all modules. Review and adjust quantities as needed.</div>
+    <div style="overflow-x:auto"><table id="bomTbl"><thead><tr><th>Item</th><th>Specification</th><th>Unit</th><th>Qty</th><th>Remarks</th></tr></thead><tbody id="bomBody"></tbody></table></div>
+    <div style="margin-top:10px;display:flex;gap:7px">
+      <button class="btn bp bsm" onclick="gBOM()">🔄 Regenerate</button>
+      <button class="btn bs bsm" onclick="exBOM()">⬇ Export CSV</button>
+    </div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(9)">← Back</button><button class="nb" onclick="gotoTab(11)">Next: Phase Bal. →</button></div>
+</div>
+
+<!-- P11 PHASE BALANCER -->
+<div class="panel" id="p11">
+  <div class="sec"><div class="st">⚖ Phase Load Balancing Optimizer</div>
+    <div class="al ai">ℹ Analyzes your load schedule, detects phase imbalance, and suggests optimal reassignments.</div>
+  </div>
+  <div class="sec">
+    <div class="st">📊 Balance Score</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:stretch">
+      <div class="im" style="flex:0 0 155px">
+        <div style="font-size:10px;font-weight:700;color:var(--cm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Imbalance Index</div>
+        <div class="is" id="pb_sc">—</div>
+        <div style="font-size:11px;color:var(--cm);margin-top:5px" id="pb_scl">Run analysis first</div>
+      </div>
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:10px;justify-content:center">
+        <div style="display:flex;gap:8px">
+          <div class="pc pR" style="flex:1"><div class="pl">R</div><div class="pkw" id="pbR_kw">0 kW</div><div class="ppct" id="pbR_pct">0%</div><div class="pbt"><div class="pfR" id="pbR_b" style="width:0%"></div></div></div>
+          <div class="pc pY" style="flex:1"><div class="pl">Y</div><div class="pkw" id="pbY_kw">0 kW</div><div class="ppct" id="pbY_pct">0%</div><div class="pbt"><div class="pfY" id="pbY_b" style="width:0%"></div></div></div>
+          <div class="pc pB" style="flex:1"><div class="pl">B</div><div class="pkw" id="pbB_kw">0 kW</div><div class="ppct" id="pbB_pct">0%</div><div class="pbt"><div class="pfB" id="pbB_b" style="width:0%"></div></div></div>
+        </div>
+        <div class="mgs" style="margin:0">
+          <div class="mg"><div class="v" id="pb_tot">0</div><div class="u">kW</div><div class="l">Single-Ph</div></div>
+          <div class="mg"><div class="v" id="pb_dev">0</div><div class="u">%</div><div class="l">Max Dev.</div></div>
+          <div class="mg"><div class="v" id="pb_ni">0</div><div class="u">A</div><div class="l">Neutral Current</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn bp" onclick="runPB()">🔄 Analyse</button>
+      <button class="btn ba" onclick="applyAll()">✅ Apply All</button>
+      <button class="btn bsm" style="border:1px solid var(--cbr)" onclick="revertAll()">↩ Revert All</button>
+    </div>
+  </div>
+  <div class="sec" id="pbCmpSec" style="display:none">
+    <div class="st">🔁 Before vs After</div>
+    <div class="cgrid">
+      <div class="cc"><div class="ch bef">Before</div><div style="padding:10px" id="pbBefBody"></div></div>
+      <div class="cc"><div class="ch aft">After</div><div style="padding:10px" id="pbAftBody"></div></div>
+    </div>
+  </div>
+  <div class="sec"><div class="st">💡 Suggested Reassignments</div><div id="pbSugg"><div class="al ai">ℹ Click "Analyse" to generate suggestions.</div></div></div>
+  <div class="sec"><div class="st">✏ Manual Override Table</div>
+    <div class="al ai" style="margin-bottom:8px">ℹ Manually reassign single-phase loads.</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>Description</th><th>Category</th><th>Load (W)</th><th>Current Phase</th><th>Reassign To</th></tr></thead><tbody id="pbManTbl"></tbody></table></div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(10)">← Back</button><button class="nb" onclick="gotoTab(12)">Next: Carbon Footprint →</button></div>
+</div>
+
+<!-- P12 ENERGY & CARBON -->
+<div class="panel" id="p12">
+  <div class="sec">
+    <div class="st">🌍 Energy Consumption &amp; Carbon Footprint</div>
+    <div class="g3">
+      <div class="fld"><label>Operating Hours / Day</label><input type="number" id="e_hrs" value="10" min="1" max="24" step="0.5" oninput="calcEnergy()"></div>
+      <div class="fld"><label>Operating Days / Week</label><input type="number" id="e_days" value="5" min="1" max="7" oninput="calcEnergy()"></div>
+      <div class="fld"><label>Weeks / Year</label><input type="number" id="e_wks" value="50" min="1" max="52" oninput="calcEnergy()"></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="fld" style="margin-bottom:10px"><label>Grid Emission Factor (kg CO₂/kWh)</label></div>
+      <div class="emf-grid" id="emfGrid">
+        <div class="emf-card sel" onclick="selEMF(0.431,'Nigeria',this)"><div class="ef-val">0.431</div><div class="ef-lbl">🇳🇬 Nigeria</div></div>
+        <div class="emf-card" onclick="selEMF(0.233,'UK',this)"><div class="ef-val">0.233</div><div class="ef-lbl">🇬🇧 UK</div></div>
+        <div class="emf-card" onclick="selEMF(0.386,'USA',this)"><div class="ef-val">0.386</div><div class="ef-lbl">🇺🇸 USA</div></div>
+        <div class="emf-card" onclick="selEMF(0.490,'South Africa',this)"><div class="ef-val">0.490</div><div class="ef-lbl">🇿🇦 South Africa</div></div>
+        <div class="emf-card" onclick="selEMF(0.380,'UAE',this)"><div class="ef-val">0.380</div><div class="ef-lbl">🇦🇪 UAE</div></div>
+        <div class="emf-card" onclick="selEMF(0.370,'Ghana',this)"><div class="ef-val">0.370</div><div class="ef-lbl">🇬🇭 Ghana</div></div>
+        <div class="emf-card" onclick="selEMF(0.630,'Kenya',this)"><div class="ef-val">0.630</div><div class="ef-lbl">🇰🇪 Kenya</div></div>
+        <div class="emf-card" onclick="selEMF(0.460,'India',this)"><div class="ef-val">0.460</div><div class="ef-lbl">🇮🇳 India</div></div>
+      </div>
+      <div class="fld" style="margin-top:8px"><label>Custom Emission Factor</label><input type="number" id="e_emf" value="0.431" step="0.001" oninput="calcEnergy()"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="st">📊 Energy Results</div>
+    <div class="eco-hero">
+      <div class="eco-card"><div class="eco-val" id="e_daily">0</div><div class="eco-unit">kWh</div><div class="eco-lbl">Daily</div></div>
+      <div class="eco-card"><div class="eco-val" id="e_monthly">0</div><div class="eco-unit">kWh</div><div class="eco-lbl">Monthly</div></div>
+      <div class="eco-card"><div class="eco-val" id="e_annual">0</div><div class="eco-unit">kWh</div><div class="eco-lbl">Annual</div></div>
+      <div class="eco-card"><div class="eco-val" id="e_co2_annual">0</div><div class="eco-unit">t CO₂/yr</div><div class="eco-lbl">Carbon (Annual)</div></div>
+      <div class="eco-card"><div class="eco-val" id="e_co2_monthly">0</div><div class="eco-unit">kg CO₂</div><div class="eco-lbl">Carbon (Monthly)</div></div>
+    </div>
+    <div class="tree-row"><div class="tree-icon">🌳</div><div><div style="font-size:13px;font-weight:700;color:var(--cs)" id="e_trees">—</div><div style="font-size:11px;color:var(--cm);margin-top:2px">trees needed annually to offset this carbon footprint</div></div></div>
+    <div class="dv"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--cm);margin-bottom:8px;text-transform:uppercase">Energy Breakdown by Category</div>
+    <div id="catBreakdown"></div>
+    <div class="dv"></div>
+    <div class="g3" style="margin-top:8px">
+      <div class="mg"><div class="v" id="e_pkfac">0</div><div class="u">kVA</div><div class="l">Peak Demand</div></div>
+      <div class="mg"><div class="v" id="e_lf">0</div><div class="u">%</div><div class="l">Load Factor</div></div>
+      <div class="mg"><div class="v" id="e_kgpkwh">0</div><div class="u">kg/kWh</div><div class="l">Carbon Intensity</div></div>
+    </div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(11)">← Back</button><button class="nb" onclick="gotoTab(13)">Next: Utility Cost →</button></div>
+</div>
+
+<!-- P13 UTILITY COST -->
+<div class="panel" id="p13">
+  <div class="sec">
+    <div class="st">💰 Utility Tariff Configuration</div>
+    <div style="font-size:12px;color:var(--cm);margin-bottom:8px;margin-top:4px">📍 Select your location to load the applicable utility tariff:</div>
+    <div class="pbs" id="tariffPresets">
+      <button class="pb active" onclick="setTariff('ng',this)">🇳🇬 Nigeria (NERC)</button>
+      <button class="pb" onclick="setTariff('uk',this)">🇬🇧 UK</button>
+      <button class="pb" onclick="setTariff('us',this)">🇺🇸 USA</button>
+      <button class="pb" onclick="setTariff('gh',this)">🇬🇭 Ghana</button>
+      <button class="pb" onclick="setTariff('za',this)">🇿🇦 South Africa</button>
+      <button class="pb" onclick="setTariff('uae',this)">🇦🇪 UAE</button>
+      <button class="pb" onclick="setTariff('custom',this)">✏ Custom</button>
+    </div>
+    <div class="g3">
+      <div class="fld"><label>Energy Tariff ($/kWh)</label><input type="number" id="u_tariff" value="0.055" step="0.001" oninput="calcUtility()"></div>
+      <div class="fld"><label>Demand Charge ($/kVA/month)</label><input type="number" id="u_dem_chg" value="3.50" step="0.1" oninput="calcUtility()"></div>
+      <div class="fld"><label>Fixed Monthly Charge ($)</label><input type="number" id="u_fixed" value="15" step="1" oninput="calcUtility()"></div>
+      <div class="fld"><label>Power Factor Penalty (%)</label><input type="number" id="u_pfpen" value="0" step="0.5" oninput="calcUtility()"></div>
+      <div class="fld"><label>Taxes / Levies (%)</label><input type="number" id="u_tax" value="7.5" step="0.5" oninput="calcUtility()"></div>
+      <div class="fld"><label>Currency Symbol</label><input type="text" id="u_cur" value="$" style="max-width:80px" oninput="calcUtility()"></div>
+    </div>
+  </div>
+  <div class="sec">
+    <div class="st">📊 Monthly Bill Estimate</div>
+    <div class="cost-hero">
+      <div style="margin-bottom:8px"><div class="lbl" style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px">Estimated Monthly Utility Bill</div><div class="cost-main" id="u_monthly_bill">$0.00</div><div class="cost-sub" id="u_annual_label">Annual: $0.00</div></div>
+      <div class="mgs" style="margin:0">
+        <div class="mg" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)"><div class="v" style="color:#6ee7b7" id="u_energy_cost">$0</div><div class="u" style="color:rgba(255,255,255,.6)">$/mo</div><div class="l" style="color:rgba(255,255,255,.5)">Energy</div></div>
+        <div class="mg" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)"><div class="v" style="color:#6ee7b7" id="u_dem_cost">$0</div><div class="u" style="color:rgba(255,255,255,.6)">$/mo</div><div class="l" style="color:rgba(255,255,255,.5)">Demand</div></div>
+        <div class="mg" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)"><div class="v" style="color:#6ee7b7" id="u_fixed_cost">$0</div><div class="u" style="color:rgba(255,255,255,.6)">$/mo</div><div class="l" style="color:rgba(255,255,255,.5)">Fixed</div></div>
+        <div class="mg" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)"><div class="v" style="color:#6ee7b7" id="u_tax_cost">$0</div><div class="u" style="color:rgba(255,255,255,.6)">$/mo</div><div class="l" style="color:rgba(255,255,255,.5)">Tax/Levy</div></div>
+      </div>
+    </div>
+    <div class="dv"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--cm);margin-bottom:8px;text-transform:uppercase">Cost Breakdown by Category</div>
+    <div class="cost-breakdown" id="costBreakdown"></div>
+    <div class="dv"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--cm);margin-bottom:8px;text-transform:uppercase">💡 Energy Saving Recommendations</div>
+    <div id="savingTips"></div>
+  </div>
+  <div class="nvr"><button class="nb" onclick="gotoTab(12)">← Back</button><button class="nb" onclick="gotoTab(14)">Next: Report →</button></div>
+</div>
+
+<!-- P14 REPORT -->
+<div class="panel" id="p14">
+  <div class="sec"><div class="st">📄 Project Report</div>
+    <div class="fl" style="margin-bottom:12px">
+      <button class="btn bp" onclick="genReport()">🔄 Generate</button>
+      <button class="btn ba" onclick="window.print()">🖨 Print / PDF</button>
+    </div>
+    <div id="repOut"></div>
+  </div>
+</div>
+</div>
+<!-- UPGRADE MODAL — rendered by access-control.js -->
+<div id="upgradeModal" role="dialog" aria-modal="true" aria-labelledby="um-title">
+  <div class="um-box">
+    <div class="um-header">
+      <div class="um-icon">🔒</div>
+      <div>
+        <div class="um-plan-badge" id="umPlanBadge">Pro Feature</div>
+        <div class="um-title" id="umTitle">Advanced Feature</div>
+      </div>
+    </div>
+    <div class="um-body">
+      <div class="um-feature-name" id="umFeatureName"></div>
+      <div class="um-message" id="umMessage"></div>
+      <div class="um-actions">
+        <button class="um-btn-upgrade" id="umUpgradeBtn" onclick="closeUpgradeModal()">Upgrade to Pro</button>
+        <button class="um-btn-close" onclick="closeUpgradeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var bar=document.getElementById('tabsBar');
+  var hintR=document.getElementById('tabsScrollHintRight');
+  var hintL=document.getElementById('tabsScrollHintLeft');
+  function upd(){
+    if(!bar)return;
+    var atEnd=bar.scrollLeft+bar.clientWidth>=bar.scrollWidth-4;
+    var atStart=bar.scrollLeft<=4;
+    if(hintR)hintR.style.opacity=atEnd?'0':'1';
+    if(hintL)hintL.style.opacity=atStart?'0':'1';
+  }
+  if(bar){bar.addEventListener('scroll',upd,{passive:true});}
+  window.addEventListener('resize',upd);
+  setTimeout(upd,200);
+})();
+</script>

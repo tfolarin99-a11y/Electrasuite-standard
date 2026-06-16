@@ -269,12 +269,16 @@ function calcUtility(){
 }
 
 // ── REPORT ──
+function safeVal(id,fallback){var el=$( id);return el?parseFloat(el.value)||fallback:fallback;}
+function safeStr(id,fallback){var el=$(id);return el?(el.value||fallback):fallback;}
 function genReport(){
   const V=gV(),connected=gTW(),demand=gDW(),pf=gPF(),kva=demand/pf/1000;
   const ph=gPL(loads),idx=cImb(ph),ni=cNeutral(ph,V,pf);
-  const emf=parseFloat($('e_emf').value)||0.431,hrs=parseFloat($('e_hrs').value)||10,days=parseFloat($('e_days').value)||5,wks=parseFloat($('e_wks').value)||50;
+  // Safely read Carbon (tab 12) inputs — may not exist in Standard edition
+  const emf=safeVal('e_emf',0.431),hrs=safeVal('e_hrs',10),days=safeVal('e_days',5),wks=safeVal('e_wks',50);
   const hrsPerYear=hrs*days*wks,demKW=demand/1000,annual=demKW*hrsPerYear,co2=annual*emf/1000;
-  const cur=$('u_cur').value||'$',tariff=parseFloat($('u_tariff').value)||0.055,monthlyKwh=demKW*(hrsPerYear/12),mBill=(monthlyKwh*tariff+kva*parseFloat($('u_dem_chg').value||3.5)+parseFloat($('u_fixed').value||15))*(1+parseFloat($('u_tax').value||7.5)/100);
+  // Safely read Utility Cost (tab 13) inputs — may not exist in Standard edition
+  const cur=safeStr('u_cur','$'),tariff=safeVal('u_tariff',0.055),monthlyKwh=demKW*(hrsPerYear/12),mBill=(monthlyKwh*tariff+kva*safeVal('u_dem_chg',3.5)+safeVal('u_fixed',15))*(1+safeVal('u_tax',7.5)/100);
   $('repOut').innerHTML=`
     <div class="sec"><div style="background:var(--cp);color:#fff;padding:12px 16px;border-radius:8px 8px 0 0;margin:-16px -16px 14px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:16px;font-weight:700">${$('pn').value||'Electrical Load Calculation Report'}</div><div style="font-size:11px;opacity:.75;margin-top:2px">${$('pl').value} | ${$('pt').value}</div></div><div style="font-size:24px">⚡</div></div>
     <table style="width:100%"><tr><td style="color:var(--cm);width:160px">Client</td><td><strong>${$('pc').value||'—'}</strong></td><td style="color:var(--cm);width:150px">Author</td><td><strong>${$('pe').value||'—'}</strong></td></tr><tr><td style="color:var(--cm)">System</td><td>${gSys()==='3ph'?'Three Phase':'Single Phase'} | ${V}V | ${$('sfreq').value}Hz</td><td style="color:var(--cm)">Earthing</td><td>${$('searth').value}</td></tr><tr><td style="color:var(--cm)">Date</td><td colspan="3">${$('pd').value||new Date().toLocaleDateString()}</td></tr></table></div>

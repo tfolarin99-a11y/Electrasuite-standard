@@ -57,7 +57,6 @@
     .nav-title { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.3px; line-height: 1; }
     .nav-company { font-size: 9.5px; color: var(--ca); letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; line-height: 1; }
 
-    /* Plan badge in nav */
     .nav-plan-badge {
       display: inline-flex; align-items: center; gap: 4px;
       background: rgba(245,158,11,0.15);
@@ -118,7 +117,8 @@
         <span class="nav-title">ElectraSuite</span>
         <span class="nav-company">Taewoo Digital</span>
       </div>
-      <span class="nav-plan-badge">Standard</span>
+      <!-- Plan badge updates dynamically after plan is fetched -->
+      <span class="nav-plan-badge" id="planBadge">Standard</span>
     </div>
     <div class="nav-right">
       <a class="help-link" href="/help/" target="_blank">❓ How to Use</a>
@@ -134,7 +134,7 @@
   <div id="calcFrame" style="display:none"></div>
 
   <script>
-    const SUPABASE_URL     = 'https://uxpgdaetneoaaevgjoai.supabase.co';
+    const SUPABASE_URL      = 'https://uxpgdaetneoaaevgjoai.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
 
     const { createClient } = supabase;
@@ -161,55 +161,80 @@
       const screen = document.getElementById('authScreen');
       screen.style.opacity = '0';
       setTimeout(() => {
-        screen.style.display = 'none';
-        document.getElementById('topNav').style.display   = 'flex';
+        screen.style.display  = 'none';
+        document.getElementById('topNav').style.display    = 'flex';
         document.getElementById('calcFrame').style.display = 'block';
-        loadCalculator();
+        loadCalculator(user.email);  // ← pass email to plan fetch
       }, 400);
     }
 
-    function loadCalculator() {
+    // ─────────────────────────────────────────────────────────────
+    //  loadCalculator — fetches plan FIRST, then loads scripts
+    //  Plan is stored on window.__ES_PLAN before access-control.js
+    //  runs, so canAccess() reads the correct live value.
+    // ─────────────────────────────────────────────────────────────
+    async function loadCalculator(email) {
       const frame = document.getElementById('calcFrame');
 
-      // ── 1. Inject stylesheet ──
+      // ── Step 1: Fetch the user's plan from Supabase ──────────────
+      let plan = 'basic'; // safe default
+      try {
+        const { data, error } = await sb
+          .from('user_plans')
+          .select('plan')
+          .eq('email', email.toLowerCase().trim())
+          .maybeSingle();
+
+        if (!error && data?.plan) {
+          plan = data.plan; // "basic" | "standard" | "pro"
+        }
+      } catch (e) {
+        console.warn('[ElectraSuite] Plan fetch failed, defaulting to basic:', e);
+      }
+
+      // ── Step 2: Set plan globally BEFORE access-control.js loads ─
+      window.__ES_PLAN  = plan;
+      window.__ES_EMAIL = email;
+
+      // Update the nav badge to show the real plan
+      const badge = document.getElementById('planBadge');
+      if (badge) badge.textContent = plan.charAt(0).toUpperCase() + plan.slice(1);
+
+      // ── Step 3: Inject stylesheet ────────────────────────────────
       const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = '/style.css';
+      link.rel   = 'stylesheet';
+      link.href  = '/style.css';
       document.head.appendChild(link);
 
-      // ── 2. Load the calculator HTML ──
-      fetch('/index-calc.html')
-        .then(r => {
-          if (!r.ok) throw new Error('index-calc.html not found — status ' + r.status);
-          return r.text();
-        })
-        .then(html => {
-          frame.innerHTML = html;
+      // ── Step 4: Load calculator HTML ─────────────────────────────
+      try {
+        const r = await fetch('/index-calc.html');
+        if (!r.ok) throw new Error('index-calc.html not found — status ' + r.status);
+        frame.innerHTML = await r.text();
+      } catch (err) {
+        frame.innerHTML = `<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ Calculator failed to load:<br><br>${err.message}</div>`;
+        return;
+      }
 
-          // ── 3. Load access-control.js FIRST, then script.js ──
-          //    Access control must be defined before any tab interaction.
-          const acScript = document.createElement('script');
-          acScript.src   = '/access-control.js';
-          acScript.onerror = () => {
-            console.error('⚠ access-control.js failed to load.');
-          };
-          acScript.onload = () => {
-            // ── 4. Load main calculator logic after access control is ready ──
-            const mainScript = document.createElement('script');
-            mainScript.src   = '/script.js';
-            mainScript.onerror = () => {
-              frame.innerHTML = '<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ script.js failed to load. Check the file exists at the root of your repo.</div>';
-            };
-            document.body.appendChild(mainScript);
-          };
-          document.body.appendChild(acScript);
-        })
-        .catch(err => {
-          frame.innerHTML = `<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ Calculator failed to load:<br><br>${err.message}<br><br>Check that index-calc.html and script.js exist at the root of your repo.</div>`;
-        });
+      // ── Step 5: Load access-control.js (reads window.__ES_PLAN) ──
+      await new Promise((resolve, reject) => {
+        const ac  = document.createElement('script');
+        ac.src    = '/access-control.js';
+        ac.onload = resolve;
+        ac.onerror = () => reject(new Error('access-control.js failed to load'));
+        document.body.appendChild(ac);
+      });
+
+      // ── Step 6: Load main calculator logic ───────────────────────
+      const s   = document.createElement('script');
+      s.src     = '/script.js';
+      s.onerror = () => {
+        frame.innerHTML = '<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ script.js failed to load.</div>';
+      };
+      document.body.appendChild(s);
     }
 
-    // ── PRIMARY AUTH CHECK ──
+    // ── PRIMARY AUTH CHECK ──────────────────────────────────────────
     let authResolved = false;
 
     const redirectTimer = setTimeout(() => {

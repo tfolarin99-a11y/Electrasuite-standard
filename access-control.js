@@ -1,11 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-//  ElectraSuite — Access Control Layer (Standard Edition)
-//  Version: 3.0 | Plan: DYNAMIC (set by plan-init.js at runtime)
+//  ElectraSuite — Access Control Layer
+//  Version: 3.0 | Plan: DYNAMIC
 //
-//  Load order in dashboard HTML (must be exact):
-//    1. <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-//    2. <script src="/plan-init.js"></script>   ← fetches plan from Supabase
-//    3. <script src="/access-control.js"></script> ← this file
+//  Plan is set at runtime by dashboard/index.html before this file
+//  loads. window.__ES_PLAN is populated from Supabase user_plans
+//  by the logged-in user's email.
+//
+//  Works across all editions: Basic, Standard, Pro.
 // ═══════════════════════════════════════════════════════════════════
 
 // Read plan set by plan-init.js — fall back to "basic" if somehow missing

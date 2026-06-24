@@ -101,6 +101,106 @@
   </style>
 </head>
 <body>
+<!-- ── ACTIVATE PLAN BANNER ──────────────────────────────────────────
+     Add this block just after the opening <body> tag in
+     dashboard/index.html (all three repos).
+
+     It reads window.__ES_PLAN after the plan fetch runs.
+     Shows only when plan is "basic" (unpaid / no purchase yet).
+     Hidden automatically once the user has a paid plan.
+─────────────────────────────────────────────────────────────────── -->
+
+<div id="activateBanner" style="display:none">
+  <style>
+    #activateBanner {
+      background: linear-gradient(90deg, rgba(245,158,11,0.12), rgba(26,58,92,0.2));
+      border-bottom: 1px solid rgba(245,158,11,0.25);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: #e8edf3;
+      flex-wrap: wrap;
+    }
+    #activateBanner .banner-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    #activateBanner .banner-icon {
+      font-size: 18px; flex-shrink: 0;
+    }
+    #activateBanner .banner-text strong {
+      color: #f59e0b;
+    }
+    #activateBanner .banner-text span {
+      color: #94a3b8; font-size: 12px; margin-left: 6px;
+    }
+    #activateBanner .banner-btn {
+      background: #f59e0b;
+      color: #0c1117;
+      border: none;
+      border-radius: 7px;
+      padding: 7px 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.2s;
+    }
+    #activateBanner .banner-btn:hover { background: #e08b00; }
+    #activateBanner .banner-dismiss {
+      background: none; border: none;
+      color: #64748b; font-size: 16px;
+      cursor: pointer; padding: 0 4px;
+      line-height: 1; flex-shrink: 0;
+    }
+    #activateBanner .banner-dismiss:hover { color: #e8edf3; }
+  </style>
+  <div class="banner-left">
+    <div class="banner-icon">🎟️</div>
+    <div class="banner-text">
+      <strong>Already purchased a plan?</strong>
+      <span>Enter your order number to activate your access.</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <a class="banner-btn" href="/activate/">Activate Plan →</a>
+    <button class="banner-dismiss" onclick="dismissBanner()" title="Dismiss">✕</button>
+  </div>
+</div>
+
+<script>
+  // Show banner only for basic (unpaid) users.
+  // Runs after loadCalculator sets window.__ES_PLAN.
+  // Uses a small delay to ensure __ES_PLAN is set before checking.
+  (function checkBanner() {
+    const dismissed = sessionStorage.getItem('es_banner_dismissed');
+    if (dismissed) return;
+
+    // Poll until __ES_PLAN is available (set by loadCalculator)
+    const interval = setInterval(() => {
+      if (window.__ES_PLAN !== undefined) {
+        clearInterval(interval);
+        if (window.__ES_PLAN === 'basic') {
+          document.getElementById('activateBanner').style.display = 'flex';
+        }
+      }
+    }, 100);
+
+    // Stop polling after 5s regardless
+    setTimeout(() => clearInterval(interval), 5000);
+  })();
+
+  function dismissBanner() {
+    document.getElementById('activateBanner').style.display = 'none';
+    sessionStorage.setItem('es_banner_dismissed', '1');
+  }
+</script>
 
   <!-- AUTH LOADING SCREEN -->
   <div id="authScreen">

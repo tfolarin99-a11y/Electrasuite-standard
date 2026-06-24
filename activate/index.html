@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElectraSuite — Activate Your Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0c1117;
+      --panel:    #111820;
+      --border:   #1e2d3d;
+      --accent:   #f59e0b;
+      --accent2:  #1a3a5c;
+      --text:     #e8edf3;
+      --muted:    #64748b;
+      --input-bg: #0c1117;
+      --error:    #ef4444;
+      --success:  #22c55e;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(100px); pointer-events: none;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 400px; height: 400px; background: rgba(26,58,92,0.4); top: -100px; right: -100px; }
+    .orb2 { width: 300px; height: 300px; background: rgba(245,158,11,0.1); bottom: -80px; left: -80px; animation-delay: -6s; }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(20px,30px) scale(1.05); }
+    }
+
+    .brand-badge {
+      position: relative; z-index: 2;
+      margin-bottom: 20px; text-align: center;
+      animation: slideUp 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .brand-badge .company {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+    }
+    .brand-badge .tagline { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 460px; margin: 0 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 40px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.05);
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .logo-icon {
+      width: 44px; height: 44px; background: var(--accent);
+      border-radius: 10px; display: flex; align-items: center;
+      justify-content: center; font-size: 22px; flex-shrink: 0;
+    }
+    .logo-text h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      letter-spacing: -0.2px; line-height: 1.2;
+    }
+    .logo-text p { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .form-title {
+      font-family: 'Space Mono', monospace;
+      font-size: 20px; font-weight: 700; margin-bottom: 6px;
+    }
+    .form-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+
+    .steps {
+      display: flex; gap: 8px; margin-bottom: 24px;
+    }
+    .step {
+      flex: 1; background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+      font-size: 11px; color: var(--muted); line-height: 1.4;
+    }
+    .step strong { display: block; color: var(--accent); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.6px; margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 11px 14px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+    }
+    .field input::placeholder { color: #374151; }
+    .field input:read-only { opacity: 0.6; cursor: not-allowed; }
+
+    .field-hint { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    .plan-select {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; margin-bottom: 20px;
+    }
+    .plan-option { display: none; }
+    .plan-label {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; padding: 12px 8px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; cursor: pointer; transition: all 0.2s;
+      font-size: 12px; color: var(--muted); text-align: center;
+    }
+    .plan-label .plan-name {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; font-weight: 700; color: var(--text);
+    }
+    .plan-label .plan-price { font-size: 10px; color: var(--muted); }
+    .plan-option:checked + .plan-label {
+      border-color: var(--accent);
+      background: rgba(245,158,11,0.08);
+      color: var(--text);
+    }
+    .plan-section-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+    }
+
+    .btn-primary {
+      width: 100%; padding: 13px;
+      background: var(--accent); color: #0c1117;
+      border: none; border-radius: 9px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      margin-top: 4px; letter-spacing: 0.3px;
+    }
+    .btn-primary:hover { background: #e08b00; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(245,158,11,0.3); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .msg {
+      padding: 11px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 500;
+      margin-bottom: 16px; display: none; line-height: 1.5;
+    }
+    .msg.error   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; display: flex; align-items: flex-start; gap: 8px; }
+    .msg.success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); color: #86efac; display: flex; align-items: flex-start; gap: 8px; }
+
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(12,17,23,0.3); border-top-color: #0c1117;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 12px; text-decoration: none;
+      margin-top: 20px; transition: color 0.2s;
+    }
+    .back-link:hover { color: var(--accent); }
+
+    /* Success state */
+    .success-state {
+      display: none; text-align: center; padding: 12px 0;
+    }
+    .success-icon {
+      font-size: 48px; margin-bottom: 16px;
+    }
+    .success-state h3 {
+      font-family: 'Space Mono', monospace;
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
+    }
+    .success-state p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    .page-footer {
+      position: relative; z-index: 2;
+      margin-top: 20px; text-align: center;
+      font-size: 10px; color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <div class="brand-badge">
+    <div class="company">Taewoo Digital</div>
+    <div class="tagline">Plan Activation</div>
+  </div>
+
+  <div class="card">
+    <div class="logo-row">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <h1>Activate<br>Your Plan</h1>
+        <p>Enter your order details to unlock your purchased edition</p>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div class="steps">
+      <div class="step"><strong>1. Submit</strong>Enter your order number and email below</div>
+      <div class="step"><strong>2. Verify</strong>Our team confirms your purchase</div>
+      <div class="step"><strong>3. Access</strong>Your plan activates — sign in to use it</div>
+    </div>
+
+    <!-- Form -->
+    <div id="claimForm">
+      <div class="msg" id="claimMsg"></div>
+
+      <div class="field">
+        <label>Your Email Address</label>
+        <input type="email" id="claimEmail" placeholder="Loading…" readonly>
+        <div class="field-hint">This is your ElectraSuite account email — pre-filled from your session.</div>
+      </div>
+
+      <div class="field">
+        <label>WooCommerce Order Number</label>
+        <input type="text" id="claimOrder" placeholder="e.g. 1042" autocomplete="off">
+        <div class="field-hint">Found in your purchase confirmation email from the website.</div>
+      </div>
+
+      <div class="plan-section-label">Plan Purchased</div>
+      <div class="plan-select">
+        <div>
+          <input type="radio" name="plan" id="planBasic" value="basic" class="plan-option">
+          <label for="planBasic" class="plan-label">
+            <span>⚡</span>
+            <span class="plan-name">Basic</span>
+            <span class="plan-price">4 modules</span>
+          </label>
+        </div>
+        <div>
+          <input type="radio" name="plan" id="planStandard" value="standard" class="plan-option" checked>
+          <label for="planStandard" class="plan-label">
+            <span>⚡⚡</span>
+            <span class="plan-name">Standard</span>
+            <span class="plan-price">11 modules</span>
+          </label>
+        </div>
+        <div>
+          <input type="radio" name="plan" id="planPro" value="pro" class="plan-option">
+          <label for="planPro" class="plan-label">
+            <span>⚡⚡⚡</span>
+            <span class="plan-name">Pro</span>
+            <span class="plan-price">15 modules</span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="claimBtn" onclick="submitClaim()">
+        Submit Activation Request
+      </button>
+
+      <div style="text-align:center">
+        <a class="back-link" href="/dashboard/">← Back to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- Success state (shown after submission) -->
+    <div class="success-state" id="successState">
+      <div class="success-icon">✅</div>
+      <h3>Request Submitted!</h3>
+      <p>
+        Your activation request has been received.<br><br>
+        Our team will verify your order and activate your plan — usually within a few hours.
+        You'll be able to sign in and access your plan once approved.
+      </p>
+      <div style="margin-top:24px">
+        <a class="btn-primary" href="/dashboard/" style="display:block;text-align:center;text-decoration:none;padding:13px">
+          Return to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">© 2025 Taewoo Digital</div>
+
+  <script>
+    const SUPABASE_URL      = 'https://uxpgdaetneoaaevgjoai.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ── Get session and pre-fill email ──────────────────────────────
+    let sessionEmail = '';
+
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.href = '/auth/';
+        return;
+      }
+      sessionEmail = session.user.email;
+      document.getElementById('claimEmail').value = sessionEmail;
+    });
+
+    function showMsg(type, text) {
+      const el = document.getElementById('claimMsg');
+      el.className = 'msg ' + type;
+      el.innerHTML = (type === 'error' ? '⚠ ' : '✓ ') + text;
+      el.style.display = 'flex';
+    }
+
+    function setLoading(loading) {
+      const btn = document.getElementById('claimBtn');
+      btn.disabled = loading;
+      btn.innerHTML = loading
+        ? '<span class="spinner"></span>Submitting…'
+        : 'Submit Activation Request';
+    }
+
+    async function submitClaim() {
+      const orderNumber = document.getElementById('claimOrder').value.trim();
+      const plan        = document.querySelector('input[name="plan"]:checked')?.value;
+
+      if (!orderNumber) return showMsg('error', 'Please enter your order number.');
+      if (!plan)        return showMsg('error', 'Please select the plan you purchased.');
+      if (!sessionEmail) return showMsg('error', 'Session expired — please sign in again.');
+
+      setLoading(true);
+
+      const { error } = await sb.from('purchase_claims').insert({
+        email:        sessionEmail.toLowerCase().trim(),
+        order_number: orderNumber,
+        plan_claimed: plan,
+        status:       'pending',
+      });
+
+      setLoading(false);
+
+      if (error) {
+        // Unique constraint means they already submitted this order
+        if (error.code === '23505') {
+          return showMsg('error', 'This order number has already been submitted. Please contact support if you need help.');
+        }
+        return showMsg('error', 'Something went wrong. Please try again or contact support.');
+      }
+
+      // Show success state
+      document.getElementById('claimForm').style.display  = 'none';
+      document.getElementById('successState').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

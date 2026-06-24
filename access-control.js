@@ -1,41 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
-//  ElectraSuite — Access Control Layer
-//  Version: 3.0 | Plan: DYNAMIC
-//
-//  Plan is set at runtime by dashboard/index.html before this file
-//  loads. window.__ES_PLAN is populated from Supabase user_plans
-//  by the logged-in user's email.
-//
-//  Works across all editions: Basic, Standard, Pro.
+//  ElectraSuite — Access Control Layer (Standard Edition)
+//  Version: 2.0 | Plan: STANDARD
 // ═══════════════════════════════════════════════════════════════════
 
-// Read plan set by plan-init.js — fall back to "basic" if somehow missing
-const CURRENT_PLAN = (window.__ES_PLAN || sessionStorage.getItem('es_plan') || 'basic');
+const CURRENT_PLAN = "standard";
 
-// ── PLAN ACCESS CONFIGURATION ─────────────────────────────────────
-// All three tiers defined here so any plan value works correctly
+// Centralised plan access configuration
 const PLAN_ACCESS = {
-  basic: {
-    allowed: [
-      "projects",      // Tab 0
-      "load",          // Tab 1
-      "demand",        // Tab 2
-      "current",       // Tab 3
-    ],
-    locked: [
-      "cable",         // Tab 4
-      "voltageDrop",   // Tab 5
-      "breaker",       // Tab 6
-      "generator",     // Tab 7
-      "inverter",      // Tab 8
-      "transformer",   // Tab 9
-      "bom",           // Tab 10
-      "phaseBalance",  // Tab 11
-      "carbon",        // Tab 12
-      "utilityCost",   // Tab 13
-      "report",        // Tab 14
-    ]
-  },
   standard: {
     allowed: [
       "projects",      // Tab 0
@@ -48,34 +19,14 @@ const PLAN_ACCESS = {
       "generator",     // Tab 7
       "inverter",      // Tab 8
       "transformer",   // Tab 9
-      "report",        // Tab 14
+      "report"         // Tab 14
     ],
     locked: [
       "bom",           // Tab 10
       "phaseBalance",  // Tab 11
       "carbon",        // Tab 12
-      "utilityCost",   // Tab 13
+      "utilityCost"    // Tab 13
     ]
-  },
-  pro: {
-    allowed: [
-      "projects",      // Tab 0
-      "load",          // Tab 1
-      "demand",        // Tab 2
-      "current",       // Tab 3
-      "cable",         // Tab 4
-      "voltageDrop",   // Tab 5
-      "breaker",       // Tab 6
-      "generator",     // Tab 7
-      "inverter",      // Tab 8
-      "transformer",   // Tab 9
-      "bom",           // Tab 10
-      "phaseBalance",  // Tab 11
-      "carbon",        // Tab 12
-      "utilityCost",   // Tab 13
-      "report",        // Tab 14
-    ],
-    locked: []
   }
 };
 
@@ -101,7 +52,8 @@ const MODULE_MAP = Object.freeze({
 /**
  * canAccess(tabIndex)
  * Hard permission check — the single source of truth.
- * Call before ANY module renders.
+ * Call before ANY module renders. Returns true only when the
+ * module key is in the allowed list for CURRENT_PLAN.
  */
 function canAccess(tabIndex) {
   const key = MODULE_MAP[tabIndex];
@@ -123,19 +75,12 @@ function isLocked(tabIndex) {
   return plan.locked.includes(key);
 }
 
-// ── UPGRADE MODAL ──────────────────────────────────────────────────
+// ── UPGRADE MODAL ─────────────────────────────────────────────────
 
 function showUpgradeModal(moduleName) {
+  // Remove existing modal if present
   const existing = document.getElementById('upgradeModal');
   if (existing) existing.remove();
-
-  // Tailor the modal message based on current plan
-  const isBasic = CURRENT_PLAN === 'basic';
-  const badgeText   = isBasic ? 'STANDARD / PRO FEATURE' : 'PRO FEATURE';
-  const titleText   = isBasic ? 'Premium Feature'        : 'Advanced Feature';
-  const upgradeText = isBasic
-    ? 'This feature is available in <strong>ElectraSuite Standard</strong> or <strong>Pro</strong>. Upgrade to unlock more modules.'
-    : 'This feature is available in <strong>ElectraSuite Pro</strong>. Upgrade to unlock advanced project planning, analytics, optimization, and reporting tools.';
 
   const overlay = document.createElement('div');
   overlay.id = 'upgradeModal';
@@ -148,26 +93,23 @@ function showUpgradeModal(moduleName) {
       <div class="upgrade-icon-wrap">
         <div class="upgrade-icon">🔒</div>
       </div>
-      <div class="upgrade-badge">${badgeText}</div>
-      <h2 class="upgrade-title" id="upgradeModalTitle">${titleText}</h2>
+      <div class="upgrade-badge">PRO FEATURE</div>
+      <h2 class="upgrade-title" id="upgradeModalTitle">Advanced Feature</h2>
       <p class="upgrade-module-name">${moduleName}</p>
-      <p class="upgrade-body">${upgradeText}</p>
+      <p class="upgrade-body">
+        This feature is available in <strong>ElectraSuite Pro</strong>.
+        Upgrade to unlock advanced project planning, analytics,
+        optimization, and reporting tools.
+      </p>
       <div class="upgrade-feature-list">
-        ${isBasic ? `
-        <div class="ufl-item">✦ Cable Selection &amp; Voltage Drop Analysis</div>
-        <div class="ufl-item">✦ Breaker, Generator &amp; Inverter Sizing</div>
-        <div class="ufl-item">✦ Transformer Sizing &amp; Report Generation</div>
-        <div class="ufl-item">✦ Bill of Materials, Phase Balancing &amp; more (Pro)</div>
-        ` : `
         <div class="ufl-item">✦ Bill of Materials auto-generation &amp; CSV export</div>
-        <div class="ufl-item">✦ Phase Balancing Optimizer</div>
+        <div class="ufl-item">✦ Phase Balancing Optimizer with AI suggestions</div>
         <div class="ufl-item">✦ Carbon Footprint &amp; Sustainability Reporting</div>
         <div class="ufl-item">✦ Utility Cost Estimation with tariff presets</div>
-        `}
       </div>
       <div class="upgrade-actions">
         <button class="upgrade-btn-pro" onclick="handleUpgradeClick()">
-          ⚡ Upgrade Now
+          ⚡ Upgrade to Pro
         </button>
         <button class="upgrade-btn-close" onclick="closeUpgradeModal()">
           Close
@@ -175,15 +117,18 @@ function showUpgradeModal(moduleName) {
       </div>
     </div>`;
 
+  // Close when clicking backdrop
   overlay.addEventListener('click', function(e) {
     if (e.target === overlay) closeUpgradeModal();
   });
 
   document.body.appendChild(overlay);
 
+  // Trap focus on the card
   requestAnimationFrame(() => {
     const card = document.getElementById('upgradeCard');
     if (card) card.focus();
+    // Animate in
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity .2s';
     requestAnimationFrame(() => { overlay.style.opacity = '1'; });
@@ -199,10 +144,11 @@ function closeUpgradeModal() {
 }
 
 function handleUpgradeClick() {
-  // Update this URL to your actual WordPress store product page
-  window.location.href = 'https://electrasuite.com/upgrade';
+  // Replace with actual upgrade URL when available
+  alert('Contact your ElectraSuite reseller or visit the product page to upgrade to Pro.');
 }
 
+// Close modal on Escape key
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeUpgradeModal();
 });
@@ -210,35 +156,33 @@ document.addEventListener('keydown', function(e) {
 // ── SECURE TAB SWITCHER ────────────────────────────────────────────
 
 const LOCKED_MODULE_NAMES = {
-  4:  "📐 Cable Selection",
-  5:  "⚡ Voltage Drop Analysis",
-  6:  "🔌 Breaker Sizing",
-  7:  "🔋 Generator Sizing",
-  8:  "🔆 Inverter Sizing",
-  9:  "🔧 Transformer Sizing",
   10: "📦 Bill of Materials (BOM)",
   11: "⚖ Phase Balancing",
   12: "🌍 Carbon Footprint Analysis",
-  13: "💰 Utility Cost Estimation",
-  14: "📄 Report Generation",
+  13: "💰 Utility Cost Estimation"
 };
 
 /**
  * safeT(tabIndex, ...extraFns)
  * Replaces the original T() for all tab clicks.
  * Performs the access check BEFORE showing any content.
+ * Even if called via console or URL hash, content is never rendered.
  */
 function safeT(n, ...extraFns) {
-  const key     = MODULE_MAP[n];
-  const plan    = PLAN_ACCESS[CURRENT_PLAN];
+  // Re-validate every time — cannot be bypassed by patching canAccess
+  // because this function reads directly from PLAN_ACCESS.
+  const key = MODULE_MAP[n];
+  const plan = PLAN_ACCESS[CURRENT_PLAN];
   const allowed = plan ? plan.allowed : [];
 
   if (!key || !allowed.includes(key)) {
-    const name = LOCKED_MODULE_NAMES[n] || 'This Feature';
+    // Module is locked — show upgrade prompt, do NOT switch panels
+    const name = LOCKED_MODULE_NAMES[n] || "This Feature";
     showUpgradeModal(name);
-    return; // Hard stop
+    return; // Hard stop — no content switch
   }
 
+  // Access granted — use original tab switcher
   T(n);
   extraFns.forEach(fn => { if (typeof fn === 'function') fn(); });
 }
@@ -246,14 +190,16 @@ function safeT(n, ...extraFns) {
 // ── HASH / URL NAVIGATION GUARD ────────────────────────────────────
 
 (function installNavigationGuard() {
+  // Block direct hash navigation to locked modules, e.g. #tab10
   function checkHash() {
-    const hash  = window.location.hash;
+    const hash = window.location.hash;
     const match = hash.match(/^#tab(\d+)$/);
     if (match) {
       const idx = parseInt(match[1]);
       if (!canAccess(idx)) {
+        // Remove the hash so back-button does not re-trigger
         history.replaceState(null, '', window.location.pathname + window.location.search);
-        const name = LOCKED_MODULE_NAMES[idx] || 'This Feature';
+        const name = LOCKED_MODULE_NAMES[idx] || "This Feature";
         showUpgradeModal(name);
       }
     }
@@ -265,12 +211,11 @@ function safeT(n, ...extraFns) {
 // ── RUNTIME TAMPER DETECTION ───────────────────────────────────────
 
 (function sealPlanAccess() {
+  // Freeze the access config so console mutations silently fail in strict mode
   try {
-    Object.keys(PLAN_ACCESS).forEach(tier => {
-      Object.freeze(PLAN_ACCESS[tier].allowed);
-      Object.freeze(PLAN_ACCESS[tier].locked);
-      Object.freeze(PLAN_ACCESS[tier]);
-    });
+    Object.freeze(PLAN_ACCESS.standard.allowed);
+    Object.freeze(PLAN_ACCESS.standard.locked);
+    Object.freeze(PLAN_ACCESS.standard);
     Object.freeze(PLAN_ACCESS);
-  } catch(e) { /* already frozen */ }
+  } catch(e) { /* already frozen or environment doesn't support it */ }
 })();

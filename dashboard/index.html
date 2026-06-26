@@ -22,17 +22,13 @@
 
     body { font-family: 'DM Sans', sans-serif; background: var(--cbg); }
 
-    /* AUTH LOADING SCREEN */
     #authScreen {
-      position: fixed; inset: 0;
-      background: #0c1117;
+      position: fixed; inset: 0; background: #0c1117;
       display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 16px;
-      z-index: 9999; transition: opacity 0.4s;
+      flex-direction: column; gap: 16px; z-index: 9999; transition: opacity 0.4s;
     }
     #authScreen .logo {
-      width: 52px; height: 52px;
-      background: var(--ca); border-radius: 12px;
+      width: 52px; height: 52px; background: var(--ca); border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: 26px; animation: pulse 1.5s ease-in-out infinite;
     }
@@ -40,64 +36,80 @@
       0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
       50%       { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(245,158,11,0); }
     }
-    #authScreen p   { color: #64748b; font-size: 13px; font-family: 'Space Mono', monospace; }
+    #authScreen p    { color: #64748b; font-size: 13px; font-family: 'Space Mono', monospace; }
     #authScreen .sub { color: #374151; font-size: 11px; font-family: 'DM Sans', sans-serif; margin-top: -8px; }
 
-    /* TOP NAV BAR */
-    #topNav {
-      background: var(--cp);
-      padding: 0 20px; height: 48px;
-      display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    /* ACTIVATION BANNER */
+    #activationBanner {
+      display: none; position: fixed; inset: 0; background: #0c1117;
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px; z-index: 9999;
+      font-family: 'DM Sans', sans-serif;
     }
-    .nav-left  { display: flex; align-items: center; gap: 10px; }
-    .nav-logo  { width: 28px; height: 28px; background: var(--ca); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
-    .nav-brand { display: flex; flex-direction: column; gap: 1px; }
-    .nav-title { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.3px; line-height: 1; }
-    .nav-company { font-size: 9.5px; color: var(--ca); letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; line-height: 1; }
+    .activation-card {
+      background: #111820; border: 1px solid #1e2d3d; border-radius: 16px;
+      padding: 40px; max-width: 480px; width: calc(100% - 40px); text-align: center;
+    }
+    .activation-card .icon { font-size: 40px; margin-bottom: 16px; }
+    .activation-card h2 {
+      font-family: 'Space Mono', monospace; font-size: 16px; font-weight: 700;
+      color: #f59e0b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .activation-card p { color: #94a3b8; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
+    .activation-card .btn-activate {
+      display: inline-block; background: #f59e0b; color: #0c1117;
+      font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 12px 28px; border-radius: 8px; text-decoration: none; transition: opacity 0.2s;
+    }
+    .activation-card .btn-activate:hover { opacity: 0.85; }
+    .activation-card .btn-signout {
+      display: block; margin-top: 14px; color: #64748b; font-size: 12px;
+      cursor: pointer; background: none; border: none;
+      text-decoration: underline; font-family: 'DM Sans', sans-serif;
+    }
+    .activation-card .btn-signout:hover { color: #94a3b8; }
 
-    /* Plan badge in nav */
+    /* TOP NAV */
+    #topNav {
+      background: var(--cp); padding: 0 20px; height: 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .nav-left    { display: flex; align-items: center; gap: 10px; }
+    .nav-logo    { width: 28px; height: 28px; background: var(--ca); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
+    .nav-brand   { display: flex; flex-direction: column; gap: 1px; }
+    .nav-title   { font-family: 'Space Mono', monospace; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.3px; line-height: 1; }
+    .nav-company { font-size: 9.5px; color: var(--ca); letter-spacing: 0.8px; text-transform: uppercase; font-weight: 600; line-height: 1; }
     .nav-plan-badge {
       display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(245,158,11,0.15);
-      border: 1px solid rgba(245,158,11,0.35);
-      color: #f59e0b;
-      font-size: 9.5px; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      padding: 3px 9px; border-radius: 20px;
+      background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.35);
+      color: #f59e0b; font-size: 9.5px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 20px;
     }
-
-    .nav-right  { display: flex; align-items: center; gap: 10px; }
-    .help-link  {
+    .nav-right   { display: flex; align-items: center; gap: 10px; }
+    .help-link   {
       display: flex; align-items: center; gap: 5px;
       background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
-      color: rgba(255,255,255,0.8);
-      font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
-      padding: 5px 11px; border-radius: 6px; text-decoration: none; transition: all 0.2s;
+      color: rgba(255,255,255,0.8); font-family: 'DM Sans', sans-serif;
+      font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 6px;
+      text-decoration: none; transition: all 0.2s;
     }
     .help-link:hover { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--ca); }
-
-    .user-pill  {
+    .user-pill   {
       display: flex; align-items: center; gap: 8px;
       background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
       border-radius: 20px; padding: 4px 12px 4px 6px;
     }
-    .user-avatar {
-      width: 26px; height: 26px; border-radius: 50%; background: var(--ca);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; color: var(--cp);
-    }
-    .user-email { font-size: 11px; color: rgba(255,255,255,0.8); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
+    .user-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--ca); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--cp); }
+    .user-email  { font-size: 11px; color: rgba(255,255,255,0.8); max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .sign-out-btn {
       background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.75);
-      font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 600;
-      padding: 5px 11px; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+      color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif;
+      font-size: 11px; font-weight: 600; padding: 5px 11px; border-radius: 6px;
+      cursor: pointer; transition: all 0.2s;
     }
     .sign-out-btn:hover { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.4); color: #fca5a5; }
-
     #calcFrame { display: block; }
   </style>
 </head>
@@ -106,11 +118,23 @@
   <!-- AUTH LOADING SCREEN -->
   <div id="authScreen">
     <div class="logo">⚡</div>
-    <p>Loading calculator…</p>
+    <p>Verifying access…</p>
     <span class="sub">Taewoo Digital</span>
   </div>
 
-  <!-- TOP NAV (hidden until auth confirmed) -->
+  <!-- ACTIVATION BANNER -->
+  <div id="activationBanner">
+    <div class="activation-card">
+      <div class="icon">🔑</div>
+      <h2>Activate Your Plan</h2>
+      <p>Your account is registered but no active plan was found.<br>
+         Enter your order number on the activation page to unlock your tool.</p>
+      <a class="btn-activate" href="/activate/">Go to Activation Page</a>
+      <button class="btn-signout" onclick="signOut()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- TOP NAV -->
   <nav id="topNav" style="display:none">
     <div class="nav-left">
       <div class="nav-logo">⚡</div>
@@ -134,7 +158,7 @@
   <div id="calcFrame" style="display:none"></div>
 
   <script>
-    const SUPABASE_URL     = 'https://uxpgdaetneoaaevgjoai.supabase.co';
+    const SUPABASE_URL      = 'https://uxpgdaetneoaaevgjoai.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
 
     const { createClient } = supabase;
@@ -142,11 +166,54 @@
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
 
+    // ── PLAN ROUTING ──────────────────────────────────────────────────
+    const THIS_PLAN = 'standard';
+    const PLAN_URLS = {
+      basic:    'https://electrical-load-calculator-basic.vercel.app',         // ← update
+      standard: window.location.origin,                           // this app
+      pro:      'https://electrical-load-calculator.vercel.app'            // ← update
+    };
+
     let appLoaded = false;
 
     async function signOut() {
       await sb.auth.signOut();
       window.location.href = '/auth/';
+    }
+
+    async function resolveUserPlan(userId) {
+      const { data, error } = await sb
+        .from('user_plans')
+        .select('plan')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) { console.warn('[ElectraSuite] Plan fetch error:', error.message); return null; }
+      return data ? data.plan : null;
+    }
+
+    async function routeByPlan(user) {
+      const plan = await resolveUserPlan(user.id);
+
+      if (!plan) { showActivationBanner(); return; }
+
+      if (plan !== THIS_PLAN) {
+        const target = PLAN_URLS[plan];
+        if (target) window.location.replace(target + '/dashboard/');
+        else showActivationBanner();
+        return;
+      }
+
+      showApp(user);
+    }
+
+    function showActivationBanner() {
+      const screen = document.getElementById('authScreen');
+      screen.style.opacity = '0';
+      setTimeout(() => {
+        screen.style.display = 'none';
+        document.getElementById('activationBanner').style.display = 'flex';
+      }, 400);
     }
 
     function showApp(user) {
@@ -161,8 +228,8 @@
       const screen = document.getElementById('authScreen');
       screen.style.opacity = '0';
       setTimeout(() => {
-        screen.style.display = 'none';
-        document.getElementById('topNav').style.display   = 'flex';
+        screen.style.display   = 'none';
+        document.getElementById('topNav').style.display    = 'flex';
         document.getElementById('calcFrame').style.display = 'block';
         loadCalculator();
       }, 400);
@@ -171,56 +238,40 @@
     function loadCalculator() {
       const frame = document.getElementById('calcFrame');
 
-      // ── 1. Inject stylesheet ──
       const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = '/style.css';
+      link.rel = 'stylesheet'; link.href = '/style.css';
       document.head.appendChild(link);
 
-      // ── 2. Load the calculator HTML ──
       fetch('/index-calc.html')
-        .then(r => {
-          if (!r.ok) throw new Error('index-calc.html not found — status ' + r.status);
-          return r.text();
-        })
+        .then(r => { if (!r.ok) throw new Error('index-calc.html not found — status ' + r.status); return r.text(); })
         .then(html => {
           frame.innerHTML = html;
-
-          // ── 3. Load access-control.js FIRST, then script.js ──
-          //    Access control must be defined before any tab interaction.
           const acScript = document.createElement('script');
           acScript.src   = '/access-control.js';
-          acScript.onerror = () => {
-            console.error('⚠ access-control.js failed to load.');
-          };
+          acScript.onerror = () => console.error('⚠ access-control.js failed to load.');
           acScript.onload = () => {
-            // ── 4. Load main calculator logic after access control is ready ──
             const mainScript = document.createElement('script');
             mainScript.src   = '/script.js';
             mainScript.onerror = () => {
-              frame.innerHTML = '<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ script.js failed to load. Check the file exists at the root of your repo.</div>';
+              frame.innerHTML = '<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ script.js failed to load.</div>';
             };
             document.body.appendChild(mainScript);
           };
           document.body.appendChild(acScript);
         })
         .catch(err => {
-          frame.innerHTML = `<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ Calculator failed to load:<br><br>${err.message}<br><br>Check that index-calc.html and script.js exist at the root of your repo.</div>`;
+          frame.innerHTML = `<div style="padding:24px;color:#dc2626;font-family:monospace">⚠ Calculator failed to load:<br><br>${err.message}</div>`;
         });
     }
 
-    // ── PRIMARY AUTH CHECK ──
     let authResolved = false;
-
-    const redirectTimer = setTimeout(() => {
-      if (!authResolved) window.location.href = '/auth/';
-    }, 4000);
+    const redirectTimer = setTimeout(() => { if (!authResolved) window.location.href = '/auth/'; }, 5000);
 
     sb.auth.onAuthStateChange((event, session) => {
       authResolved = true;
       clearTimeout(redirectTimer);
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
-        if (session && session.user) showApp(session.user);
+        if (session?.user) routeByPlan(session.user);
         else window.location.href = '/auth/';
       } else if (event === 'SIGNED_OUT') {
         window.location.href = '/auth/';
@@ -228,10 +279,10 @@
     });
 
     sb.auth.getSession().then(({ data: { session } }) => {
-      if (session && session.user && !appLoaded) {
+      if (session?.user && !authResolved) {
         authResolved = true;
         clearTimeout(redirectTimer);
-        showApp(session.user);
+        routeByPlan(session.user);
       }
     });
   </script>

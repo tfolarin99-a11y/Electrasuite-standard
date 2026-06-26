@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ElectraSuite — Activate Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c1117;
+      --panel: #111820;
+      --border: #1e2d3d;
+      --accent: #f59e0b;
+      --text: #e8edf3;
+      --muted: #64748b;
+      --error: #ef4444;
+      --success: #22c55e;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(245,158,11,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245,158,11,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(100px); pointer-events: none;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb1 { width: 400px; height: 400px; background: rgba(26,58,92,0.4); top: -100px; right: -100px; }
+    .orb2 { width: 300px; height: 300px; background: rgba(245,158,11,0.12); bottom: -80px; left: -80px; animation-delay: -6s; }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(20px,30px) scale(1.05); }
+    }
+
+    .brand-badge {
+      position: relative; z-index: 2;
+      margin-bottom: 20px; text-align: center;
+    }
+    .brand-badge .company {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+    }
+    .brand-badge .tagline { font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+    .card {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 480px; margin: 0 20px;
+      background: var(--panel);
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 0 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.05);
+    }
+
+    .card-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+
+    .card h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px; font-weight: 700;
+      color: var(--accent); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+
+    .card .subtitle {
+      color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 28px;
+    }
+
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--muted); letter-spacing: 0.8px;
+      text-transform: uppercase; margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; padding: 11px 14px;
+      outline: none; transition: border-color 0.2s;
+      appearance: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--accent);
+    }
+    .field input::placeholder { color: #374151; }
+
+    .btn-submit {
+      width: 100%; padding: 13px;
+      background: var(--accent); color: #0c1117;
+      font-family: 'Space Mono', monospace;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      border: none; border-radius: 8px;
+      cursor: pointer; transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+    .btn-submit:hover { opacity: 0.88; }
+    .btn-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .status-msg {
+      display: none; margin-top: 18px;
+      padding: 12px 16px; border-radius: 8px;
+      font-size: 13px; line-height: 1.5;
+    }
+    .status-msg.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
+    .status-msg.success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #86efac; }
+    .status-msg.info    { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); color: #fcd34d; }
+
+    .footer-links {
+      margin-top: 24px; text-align: center; font-size: 12px; color: var(--muted);
+    }
+    .footer-links a { color: var(--muted); text-decoration: underline; cursor: pointer; }
+    .footer-links a:hover { color: var(--text); }
+
+    /* Loading state */
+    #loadingScreen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 14px; z-index: 999;
+    }
+    .spinner {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid rgba(245,158,11,0.15);
+      border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loadingScreen p { color: var(--muted); font-size: 12px; font-family: 'Space Mono', monospace; }
+
+    /* Already-active state */
+    #alreadyActive {
+      display: none; text-align: center;
+    }
+    #alreadyActive .check { font-size: 48px; margin-bottom: 16px; }
+    #alreadyActive h2 {
+      font-family: 'Space Mono', monospace; font-size: 16px;
+      color: var(--success); letter-spacing: 1px; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    #alreadyActive p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .btn-go {
+      display: inline-block; margin-top: 20px;
+      background: var(--success); color: #0c1117;
+      font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      padding: 11px 24px; border-radius: 8px;
+      text-decoration: none; transition: opacity 0.2s;
+    }
+    .btn-go:hover { opacity: 0.85; }
+  </style>
+</head>
+<body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <!-- LOADING (while checking auth) -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <p>Checking session…</p>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="brand-badge" id="mainContent" style="display:none">
+    <span class="company">Taewoo Digital · ElectraSuite</span>
+    <div class="tagline">Plan Activation</div>
+  </div>
+
+  <div class="card" id="mainCard" style="display:none">
+
+    <!-- FORM STATE -->
+    <div id="formState">
+      <span class="card-icon">🔑</span>
+      <h1>Activate Your Plan</h1>
+      <p class="subtitle">
+        Enter the order number from your purchase confirmation email.
+        Your account will be reviewed and activated — usually within a few hours.
+      </p>
+
+      <div class="field">
+        <label>Order Number</label>
+        <input type="text" id="orderNumber" placeholder="e.g. WC-12345 or ORD-98765" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label>Purchase Email</label>
+        <input type="email" id="purchaseEmail" placeholder="The email used at checkout" autocomplete="email">
+      </div>
+
+      <div class="field">
+        <label>Plan Purchased</label>
+        <select id="planSelect">
+          <option value="">— Select your plan —</option>
+          <option value="basic">ElectraSuite Basic</option>
+          <option value="standard">ElectraSuite Standard</option>
+          <option value="pro">ElectraSuite Pro</option>
+        </select>
+      </div>
+
+      <button class="btn-submit" id="submitBtn" onclick="submitClaim()">Submit Activation Request</button>
+
+      <div class="status-msg" id="statusMsg"></div>
+
+      <div class="footer-links">
+        <a onclick="signOut()">Sign out</a> &nbsp;·&nbsp;
+        <a href="/dashboard/">Go to Dashboard</a>
+      </div>
+    </div>
+
+    <!-- ALREADY ACTIVE STATE -->
+    <div id="alreadyActive" style="display:none">
+      <div class="check">✅</div>
+      <h2>Plan Active</h2>
+      <p id="activeMsg">Your plan is already active. Head to the dashboard to get started.</p>
+      <a class="btn-go" id="dashboardLink" href="/dashboard/">Open Dashboard</a>
+      <div class="footer-links" style="margin-top:16px">
+        <a onclick="signOut()">Sign out</a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const SUPABASE_URL      = 'https://uxpgdaetneoaaevgjoai.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV4cGdkYWV0bmVvYWFldmdqb2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDk2ODQsImV4cCI6MjA5NDkyNTY4NH0.srmK2um_dvrSKawcnZa3V1hAlzb1la27J8INUYjJV1Q';
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    // URLs for the three apps — update to match your actual domains
+    const PLAN_URLS = {
+      basic:    'https://electrasuite-basic.vercel.app',
+      standard: 'https://electrasuite-standard.vercel.app',
+      pro:      'https://electrasuite-pro.vercel.app'
+    };
+
+    let currentUser = null;
+
+    async function signOut() {
+      await sb.auth.signOut();
+      window.location.href = '/auth/';
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.className = 'status-msg ' + type;
+      el.style.display = 'block';
+    }
+
+    function hideStatus() {
+      document.getElementById('statusMsg').style.display = 'none';
+    }
+
+    async function submitClaim() {
+      hideStatus();
+      const orderNumber   = document.getElementById('orderNumber').value.trim();
+      const purchaseEmail = document.getElementById('purchaseEmail').value.trim();
+      const plan          = document.getElementById('planSelect').value;
+
+      if (!orderNumber)   { showStatus('Please enter your order number.', 'error'); return; }
+      if (!purchaseEmail) { showStatus('Please enter the email used at checkout.', 'error'); return; }
+      if (!plan)          { showStatus('Please select the plan you purchased.', 'error'); return; }
+      if (!currentUser)   { showStatus('Session expired. Please sign in again.', 'error'); return; }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+
+      const { error } = await sb.from('purchase_claims').insert({
+        user_id:      currentUser.id,
+        order_number: orderNumber,
+        email:        purchaseEmail,
+        plan_claimed: plan
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Submit Activation Request';
+
+      if (error) {
+        if (error.code === '23505') {
+          // Duplicate — claim already submitted
+          showStatus('A claim has already been submitted for this account. Please wait for approval.', 'info');
+        } else {
+          showStatus('Submission failed: ' + error.message, 'error');
+        }
+        return;
+      }
+
+      showStatus(
+        '✅ Claim submitted! Your plan will be activated after review — usually within a few hours. ' +
+        'You\'ll be able to access the tool as soon as it\'s approved.',
+        'success'
+      );
+
+      document.getElementById('orderNumber').value   = '';
+      document.getElementById('purchaseEmail').value = '';
+      document.getElementById('planSelect').value    = '';
+    }
+
+    // ── INIT: check auth + existing plan ────────────────────────────────
+    async function init(user) {
+      currentUser = user;
+
+      // Pre-fill email in the form
+      document.getElementById('purchaseEmail').value = user.email || '';
+
+      // Check if plan is already active
+      const { data } = await sb
+        .from('user_plans')
+        .select('plan')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('mainContent').style.display   = 'block';
+      document.getElementById('mainCard').style.display      = 'block';
+
+      if (data && data.plan) {
+        // Plan already active — show "go to dashboard" state
+        const planLabel = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+        document.getElementById('formState').style.display   = 'none';
+        document.getElementById('alreadyActive').style.display = 'block';
+        document.getElementById('activeMsg').textContent =
+          `Your ${planLabel} plan is active. Click below to open your tool.`;
+
+        // Link directly to the correct app's dashboard
+        const url = PLAN_URLS[data.plan] || window.location.origin;
+        document.getElementById('dashboardLink').href = url + '/dashboard/';
+        return;
+      }
+
+      // No plan yet — show the form
+      document.getElementById('formState').style.display = 'block';
+    }
+
+    // Auth check
+    sb.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        init(session.user);
+      } else {
+        window.location.href = '/auth/';
+      }
+    });
+
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') window.location.href = '/auth/';
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user && !currentUser) {
+        init(session.user);
+      }
+    });
+  </script>
+</body>
+</html>

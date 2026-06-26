@@ -145,7 +145,7 @@ function closeUpgradeModal() {
 
 function handleUpgradeClick() {
   // Replace with actual upgrade URL when available
-  alert('Contact your ElectraSuite reseller or visit the product page to upgrade to Pro.');
+  window.open("https://taewoodigital.com/product/electrasuite-pro/", "_blank", "noopener,noreferrer");
 }
 
 // Close modal on Escape key

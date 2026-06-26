@@ -1,15 +1,16 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/auth/index.html" },
-    { "source": "/auth", "destination": "/auth/index.html" },
-    { "source": "/dashboard", "destination": "/dashboard/index.html" },
-    { "source": "/help", "destination": "/help/index.html" }
+    { "source": "/",           "destination": "/auth/index.html" },
+    { "source": "/auth",       "destination": "/auth/index.html" },
+    { "source": "/dashboard",  "destination": "/dashboard/index.html" },
+    { "source": "/activate",   "destination": "/activate/index.html" },
+    { "source": "/help",       "destination": "/help/index.html" }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "X-Frame-Options",       "value": "SAMEORIGIN" },
         { "key": "X-Content-Type-Options", "value": "nosniff" }
       ]
     }

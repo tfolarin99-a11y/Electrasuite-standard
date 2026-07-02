@@ -97,7 +97,7 @@ function showUpgradeModal(moduleName) {
       <h2 class="upgrade-title" id="upgradeModalTitle">Advanced Feature</h2>
       <p class="upgrade-module-name">${moduleName}</p>
       <p class="upgrade-body">
-        This feature is available in <strong>ElectraSuite Pro</strong>.
+        This feature is available in <strong>PowerDesk<sup style="font-size:0.6em;">TM</sup> Pro</strong>.
         Upgrade to unlock advanced project planning, analytics,
         optimization, and reporting tools.
       </p>

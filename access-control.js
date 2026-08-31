@@ -144,8 +144,8 @@ function closeUpgradeModal() {
 }
 
 function handleUpgradeClick() {
-  // Replace with actual upgrade URL when available
-  window.open("https://taewoodigital.com/product/electrasuite-pro/", "_blank", "noopener,noreferrer");
+  // Existing Standard customers pay only the difference to move to Pro
+  window.open("https://taewoodigital.com/product/powerdesk-upgrade-standard-%E2%86%92-pro/", "_blank", "noopener,noreferrer");
 }
 
 // Close modal on Escape key

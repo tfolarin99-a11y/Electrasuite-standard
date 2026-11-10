@@ -195,7 +195,7 @@
   <!-- MAIN CARD -->
   <div class="brand-badge" id="mainContent" style="display:none">
     <span class="company">Taewoo Digital · PowerDesk<sup style="font-size:0.6em;">TM</sup></span>
-    <div class="tagline">Plan Activation</div>
+    <div class="tagline">Instant Access</div>
   </div>
 
   <div class="card" id="mainCard" style="display:none">
@@ -203,10 +203,10 @@
     <!-- FORM STATE -->
     <div id="formState">
       <span class="card-icon" id="formIcon">🔑</span>
-      <h1 id="formTitle">Activate Your Plan</h1>
+      <h1 id="formTitle">Enter Your Order Details</h1>
       <p class="subtitle" id="formSubtitle">
-        Enter the order number from your purchase confirmation email.
-        Your account will be reviewed and activated — usually within a few hours.
+        Enter the order number from your purchase confirmation email
+        and you'll get instant access to your tool.
       </p>
 
       <div class="field">
@@ -229,7 +229,7 @@
         </select>
       </div>
 
-      <button class="btn-submit" id="submitBtn" onclick="submitClaim()">Submit Activation Request</button>
+      <button class="btn-submit" id="submitBtn" onclick="submitClaim()">Unlock My Tool</button>
 
       <div class="status-msg" id="statusMsg"></div>
 
@@ -312,7 +312,7 @@
       }
 
       const btn = document.getElementById('submitBtn');
-      const idleLabel = isUpgrade ? 'Submit Upgrade Request' : 'Submit Activation Request';
+      const idleLabel = isUpgrade ? 'Unlock Upgrade' : 'Unlock My Tool';
       btn.disabled = true;
       btn.textContent = 'Submitting…';
 
@@ -326,26 +326,33 @@
       btn.disabled = false;
       btn.textContent = idleLabel;
 
-      if (error) {
-        if (error.code === '23505') {
-          // Duplicate — claim already submitted
-          showStatus('A claim has already been submitted for this account. Please wait for approval.', 'info');
-        } else {
-          showStatus('Submission failed: ' + error.message, 'error');
-        }
+      // A database trigger grants the claimed plan the moment the claim row is inserted.
+      // 23505 = this account already claimed this plan before: treat it as "already in".
+      if (error && error.code !== '23505') {
+        showStatus('Submission failed: ' + error.message, 'error');
         return;
       }
 
-      showStatus(
-        isUpgrade
-          ? '✅ Upgrade request submitted! Your account will be moved to the new plan after review — usually within a few hours.'
-          : '✅ Claim submitted! Your plan will be activated after review — usually within a few hours. ' +
-            'You\'ll be able to access the tool as soon as it\'s approved.',
-        'success'
-      );
+      // Confirm the plan was actually granted, then send them straight into the tool
+      const { data: planRow } = await sb
+        .from('user_plans')
+        .select('plan')
+        .eq('user_id', currentUser.id)
+        .maybeSingle();
 
-      document.getElementById('orderNumber').value   = '';
-      document.getElementById('planSelect').value    = '';
+      if (!planRow || !planRow.plan) {
+        showStatus(
+          'We could not unlock access for this order. Please contact support at ' +
+          'fola.taiwo@taewoodigital.com with your order number.',
+          'error'
+        );
+        return;
+      }
+
+      showStatus('✅ Access granted! Opening your tool…', 'success');
+      document.getElementById('submitBtn').disabled = true;
+      const target = (PLAN_URLS[planRow.plan] || window.location.origin) + '/dashboard/';
+      setTimeout(function () { window.location.href = target; }, 1200);
     }
 
     // ── UPGRADE MODE: switch the form to only offer higher tiers ────────
@@ -371,9 +378,9 @@
       document.getElementById('formTitle').textContent = 'Upgrade Your Plan';
       document.getElementById('formSubtitle').textContent =
         'Enter the order number from your upgrade purchase confirmation email. ' +
-        'Your account will be moved to the new plan after review — usually within a few hours.';
+        'Your account will be moved to the new plan instantly.';
       document.getElementById('planSelectLabel').textContent = 'Upgrading To';
-      document.getElementById('submitBtn').textContent = 'Submit Upgrade Request';
+      document.getElementById('submitBtn').textContent = 'Unlock Upgrade';
       document.getElementById('purchaseEmail').value = currentUser.email || '';
       document.getElementById('orderNumber').value = '';
       document.getElementById('cancelUpgradeLink').style.display = 'block';
